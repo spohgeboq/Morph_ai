@@ -18,153 +18,40 @@ import {
   RotateCcw,
   X
 } from 'lucide-react';
+import { useUser } from '../components/UserContext';
+import { fetchUserGenerations } from '../services/api';
 
-// Модель стоимости по умолчанию
+// Базовые соответствия стоимости моделей
 const MODEL_COSTS = {
-  'nano-banana': 8,
-  'kling-hd': 12,
-  'flux-pro': 10,
-  'midjourney-v6': 10,
-  'gpt-4o': 3
+  'kling': 12,
+  'hailuo': 12,
+  'luma': 12,
+  'runway': 15,
+  'seedance': 12,
+  'flux': 8,
+  'dalle3': 10,
+  'imagen3': 10,
+  'gpt-4o': 3,
+  'claude-3-5': 3,
+  'gemini-flash': 2
 };
 
-// Демо-данные истории (Вариант А: Интеллектуальные медиа-карточки)
-const INITIAL_CHATS = [
-  {
-    id: 'chat-1',
-    title: 'Курильщик с сигарой в неоновом свете',
-    modelId: 'nano-banana',
-    modelName: 'Nano Banana',
-    versionName: 'Nano Pro 2.0',
-    cost: 8,
-    category: 'photo',
-    time: '3 д',
-    dateStr: '28 авг, 19:42',
-    prompt: 'Стильный винтажный портрет мужчины с сигарой в клубах кинематографичного дыма, неоновый контровой свет, 8k art',
-    preview: 'https://images.unsplash.com/photo-1563089145-599997674d42?w=500&auto=format&fit=crop&q=80',
-    messages: [
-      { 
-        id: 'm1', 
-        sender: 'user', 
-        text: 'Создай стильный портрет мужчины, который курит сигару в винтажном клубе', 
-        time: '19:40' 
-      },
-      { 
-        id: 'm2', 
-        sender: 'ai', 
-        type: 'image', 
-        mediaUrl: 'https://images.unsplash.com/photo-1563089145-599997674d42?w=800&auto=format&fit=crop&q=80', 
-        prompt: 'Стильный винтажный портрет мужчины с сигарой в клубах кинематографичного дыма, неоновый контровой свет, 8k art',
-        text: 'Шедевр успешно сгенерирован через Nano Banana (Nano Pro 2.0).', 
-        time: '19:42' 
-      }
-    ]
-  },
-  {
-    id: 'chat-2',
-    title: 'Киберпанк спорткар под дождем',
-    modelId: 'kling-hd',
-    modelName: 'Kling AI',
-    versionName: 'Kling 1.5 HD',
-    cost: 12,
-    category: 'video',
-    time: 'Вчера',
-    dateStr: 'Вчера, 15:10',
-    prompt: 'Неоновый киберпанк спорткар мчит по ночному мокрому Токио под дождем, отражения огней на асфальте, cinematic 4k',
-    preview: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500&auto=format&fit=crop&q=80',
-    messages: [
-      { 
-        id: 'm1', 
-        sender: 'user', 
-        text: 'Киберпанк спорткар мчит по ночному мокрому Токио под дождем, отражения огней на асфальте, cinematic 4k', 
-        time: '15:08' 
-      },
-      { 
-        id: 'm2', 
-        sender: 'ai', 
-        type: 'image', 
-        mediaUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=800&auto=format&fit=crop&q=80', 
-        prompt: 'Неоновый киберпанк спорткар мчит по ночному мокрому Токио под дождем, отражения огней на асфальте, cinematic 4k',
-        text: 'Видеоролик 1080p успешно сгенерирован и готов к скачиванию.', 
-        time: '15:10' 
-      }
-    ]
-  },
-  {
-    id: 'chat-3',
-    title: 'Студийный портрет в лучах заката',
-    modelId: 'flux-pro',
-    modelName: 'Flux',
-    versionName: 'Flux 1.1 Pro',
-    cost: 10,
-    category: 'photo',
-    time: 'Сегодня',
-    dateStr: 'Сегодня, 11:25',
-    prompt: 'Эстетичный портрет девушки на крыше с золотым закатным светом, 35mm lens, фотореализм',
-    preview: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80',
-    messages: [
-      { 
-        id: 'm1', 
-        sender: 'user', 
-        text: 'Эстетичный портрет девушки на крыше с золотым закатным светом, 35mm lens, фотореализм', 
-        time: '11:24' 
-      },
-      { 
-        id: 'm2', 
-        sender: 'ai', 
-        type: 'image', 
-        mediaUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80', 
-        prompt: 'Эстетичный портрет девушки на крыше с золотым закатным светом, 35mm lens, фотореализм',
-        text: 'Портрет студийного качества создан через Flux 1.1 Pro.', 
-        time: '11:25' 
-      }
-    ]
-  },
-  {
-    id: 'chat-4',
-    title: 'Сценарий вирусного Reels для бренда',
-    modelId: 'gpt-4o',
-    modelName: 'OpenAI GPT',
-    versionName: 'GPT-4o Omni',
-    cost: 3,
-    category: 'text',
-    time: '2 ч назад',
-    dateStr: 'Сегодня, 14:05',
-    prompt: 'Напиши цепляющий сценарий для короткого Reels с хуком на первых 3 секундах',
-    preview: null,
-    messages: [
-      { 
-        id: 'm1', 
-        sender: 'user', 
-        text: 'Напиши цепляющий сценарий для короткого Reels с хуком на первых 3 секундах', 
-        time: '14:04' 
-      },
-      { 
-        id: 'm2', 
-        sender: 'ai', 
-        type: 'text', 
-        prompt: 'Напиши цепляющий сценарий для короткого Reels с хуком на первых 3 секундах',
-        text: '🎬 Сценарий вирусного Reels:\n\n[0-3 сек] ХУК: «Большинство людей используют нейросети неправильно, и вот почему...»\n[3-15 сек] Суть: Покажи 3 неочевидных фишки, которые экономят 4 часа работы в день.\n[15-20 сек] СТА: «Сохрани этот рилс, чтобы не потерять инструкции!»', 
-        time: '14:05' 
-      }
-    ]
-  }
-];
+const INITIAL_CHATS = [];
+
+
 
 const Chats = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { showToast, showConfirm } = useToast();
   const { t, translateDynamic } = useLanguage();
+  const { currentUser, balance: userBalance } = useUser();
   const fileInputRef = useRef(null);
   const textareaRef = useRef(null);
   const messagesEndRef = useRef(null);
 
   // Баланс пользователя
-  const [balance, setBalance] = useState(() => {
-    const saved = localStorage.getItem('morphai_balance');
-    return saved ? Number(saved) : 120;
-  });
+  const balance = userBalance !== undefined ? userBalance : 120;
   const [showRechargeModal, setShowRechargeModal] = useState(false);
 
   // Загрузка сохраненных чатов или использование демо-данных
@@ -172,13 +59,59 @@ const Chats = () => {
     const saved = localStorage.getItem('morphai_chats_history');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
       } catch (e) {
         return INITIAL_CHATS;
       }
     }
     return INITIAL_CHATS;
   });
+
+  // Загрузка реальных генераций с бэкенда при авторизованном пользователе
+  useEffect(() => {
+    if (currentUser) {
+      const id = currentUser.telegram_id || currentUser.id;
+      if (id) {
+        fetchUserGenerations(id).then((serverGens) => {
+          if (serverGens && serverGens.length > 0) {
+            setChats(prev => {
+              if (prev && prev.length > 0) return prev;
+              return serverGens.map(g => ({
+                id: 'chat_' + (g.id || g.task_id),
+                title: g.prompt?.slice(0, 35) || 'Генерация',
+                modelId: g.model_name || 'kling',
+                modelName: g.model_name || 'MorphAI',
+                versionName: g.tier_name || g.model_name || 'Pro',
+                cost: g.credits_charged || 10,
+                category: g.task_type === 'video' ? 'video' : (g.task_type === 'text' ? 'text' : 'photo'),
+                time: 'Недавно',
+                dateStr: new Date(g.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }),
+                preview: g.result_url,
+                messages: [
+                  {
+                    id: 'm_u_' + g.id,
+                    sender: 'user',
+                    text: g.prompt,
+                    time: '12:00'
+                  },
+                  {
+                    id: 'm_a_' + g.id,
+                    sender: 'ai',
+                    type: g.task_type === 'video' ? 'video' : (g.task_type === 'text' ? 'text' : 'image'),
+                    prompt: g.prompt,
+                    mediaUrl: g.result_url,
+                    text: g.task_type === 'text' ? g.result_url : `Генерация завершена через ${g.model_name || 'MorphAI'}.`,
+                    time: '12:01'
+                  }
+                ]
+              }));
+            });
+          }
+        }).catch(() => {});
+      }
+    }
+  }, [currentUser]);
 
   // Активная вкладка фильтра ('all' | 'photo' | 'video' | 'text')
   const [activeTab, setActiveTab] = useState('all');
@@ -507,47 +440,61 @@ const Chats = () => {
 
           {/* Список сессий */}
           <div className="chats-list-grid">
-            {filteredChats.map((chat) => (
-              <div 
-                key={chat.id}
-                className="chat-session-card"
-                onClick={() => setActiveChat(chat)}
-              >
-                {/* Левое наглядное медиа-превью результата */}
+            {filteredChats.length > 0 ? (
+              filteredChats.map((chat) => (
                 <div 
-                  className="chat-card-thumb-box"
-                  style={chat.preview ? { backgroundImage: `url(${chat.preview})` } : {}}
+                  key={chat.id}
+                  className="chat-session-card"
+                  onClick={() => setActiveChat(chat)}
                 >
-                  {chat.category === 'text' ? (
-                    <FileText size={22} color="#e5b95c" />
-                  ) : (
-                    <span className="chat-thumb-cat-badge">
-                      {chat.category === 'video' ? (
-                        <Play size={10} fill="#ffffff" />
-                      ) : (
-                        <Camera size={10} />
-                      )}
-                    </span>
-                  )}
-                </div>
+                  {/* Левое наглядное медиа-превью результата */}
+                  <div 
+                    className="chat-card-thumb-box"
+                    style={chat.preview ? { backgroundImage: `url(${chat.preview})` } : {}}
+                  >
+                    {chat.category === 'text' ? (
+                      <FileText size={22} color="#e5b95c" />
+                    ) : (
+                      <span className="chat-thumb-cat-badge">
+                        {chat.category === 'video' ? (
+                          <Play size={10} fill="#ffffff" />
+                        ) : (
+                          <Camera size={10} />
+                        )}
+                      </span>
+                    )}
+                  </div>
 
-                {/* Центральный блок: заголовок и модель */}
-                <div className="chat-card-info-col">
-                  <span className="chat-card-title">{chat.title}</span>
-                  <div className="chat-card-meta-row">
-                    <span className="chat-card-model-pill">
-                      {chat.modelName} • {chat.versionName}
-                    </span>
+                  {/* Центральный блок: заголовок и модель */}
+                  <div className="chat-card-info-col">
+                    <span className="chat-card-title">{chat.title}</span>
+                    <div className="chat-card-meta-row">
+                      <span className="chat-card-model-pill">
+                        {chat.modelName} • {chat.versionName}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Правый блок: время и стрелочка перехода */}
+                  <div className="chat-card-right-col">
+                    <span className="chat-card-time-pill">{chat.time}</span>
+                    <ChevronRight size={18} className="chat-card-arrow" />
                   </div>
                 </div>
-
-                {/* Правый блок: время и стрелочка перехода */}
-                <div className="chat-card-right-col">
-                  <span className="chat-card-time-pill">{chat.time}</span>
-                  <ChevronRight size={18} className="chat-card-arrow" />
+              ))
+            ) : (
+              <div className="chats-empty-state">
+                <div className="chats-empty-icon-wrap">
+                  <Sparkles size={28} />
                 </div>
+                <h4 className="chats-empty-title">{t('emptyGenTitle') || 'У вас пока нет генераций'}</h4>
+                <p className="chats-empty-sub">Выберите нейросеть и создайте свой первый шедевр</p>
+                <button className="chats-empty-create-btn" onClick={handleGoCreate}>
+                  <Plus size={16} strokeWidth={3} />
+                  <span>Перейти в Создать</span>
+                </button>
               </div>
-            ))}
+            )}
           </div>
         </>
       )}

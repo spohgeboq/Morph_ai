@@ -27,118 +27,14 @@ import { useNavigate } from 'react-router-dom';
 import WebApp from '@twa-dev/sdk';
 import { useToast } from '../components/ToastContext';
 import { useLanguage } from '../components/LanguageContext';
+import { useUser } from '../components/UserContext';
+import { fetchUserGenerations } from '../services/api';
 
-// Базовые демонстрационные генерации автора с привязкой к сессиям чатов
-const INITIAL_MY_CREATIONS = [
-  {
-    id: 'c1',
-    chatId: 'chat-2',
-    title: 'Неоновая Сакура в Киото',
-    type: 'video',
-    media: 'https://assets.mixkit.co/videos/preview/mixkit-futuristic-robot-turning-its-head-41477-large.mp4',
-    thumb: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=600&auto=format&fit=crop',
-    model: 'Kling 1.5 HD',
-    cost: 12,
-    prompt: 'Киберпанк девушка под неоновой сакурой в Киото, голографический дождь, отражения на мокром асфальте, 8k, кинематографичный свет',
-    date: 'Сегодня, 14:30'
-  },
-  {
-    id: 'c2',
-    chatId: 'chat-3',
-    title: 'Old Money Портрет 35mm',
-    type: 'photo',
-    thumb: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=600&auto=format&fit=crop',
-    model: 'Flux 1.1 Pro',
-    cost: 10,
-    prompt: 'Эстетичный женский портрет в стиле старых денег, 35mm пленочный снимок Kodak Portra, мягкий естественный свет, пастельные тона',
-    date: 'Вчера, 19:10'
-  },
-  {
-    id: 'c3',
-    chatId: 'chat-1',
-    title: 'Космический Кристалл',
-    type: 'photo',
-    thumb: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600&auto=format&fit=crop',
-    model: 'Midjourney v6',
-    cost: 8,
-    prompt: 'Огромный светящийся кристалл в открытом космосе среди туманностей, абстрактная геометрия, фотореализм, 4K render',
-    date: '2 дня назад'
-  },
-  {
-    id: 'c4',
-    chatId: 'chat-2',
-    title: 'Бегущий по лезвию 2099',
-    type: 'video',
-    media: 'https://assets.mixkit.co/videos/preview/mixkit-hands-holding-a-vintage-camera-42845-large.mp4',
-    thumb: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=600&auto=format&fit=crop',
-    model: 'Runway Gen-3',
-    cost: 16,
-    prompt: 'Футуристический летающий автомобиль сквозь смог ночного мегаполиса, свет фар в тумане, динамичный пролет камеры',
-    date: '3 дня назад'
-  }
-];
+// Начальные данные (пустые, заполняются реальными генерациями пользователя)
+const INITIAL_MY_CREATIONS = [];
+const DEMO_LIKED_ITEMS = [];
+const INITIAL_ALBUMS = [];
 
-// Демонстрационные понравившиеся видео-шаблоны из Ленты для вкладки "Избранное"
-const DEMO_LIKED_ITEMS = [
-  {
-    id: 'f1',
-    title: 'Neon Tokyo Cyberpunk',
-    type: 'video',
-    author: '@cyber_morph',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop',
-    model: 'Kling 1.5 HD',
-    cost: 10,
-    media: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=900&auto=format&fit=crop',
-    thumb: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=600&auto=format&fit=crop',
-    likesCount: 14200,
-    category: 'cyberpunk',
-    prompt: 'Киберпанк девушка в неоновом дожде, отражения мокрого асфальта, 8K Ultra HD, кинематографичный свет',
-    date: 'Из Ленты'
-  },
-  {
-    id: 'f3',
-    title: 'Cinematic Fashion Runway',
-    type: 'video',
-    author: '@vogue_ai',
-    avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=200&auto=format&fit=crop',
-    model: 'Runway Gen-3',
-    cost: 12,
-    media: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=900&auto=format&fit=crop',
-    thumb: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=600&auto=format&fit=crop',
-    likesCount: 18900,
-    category: 'creative',
-    prompt: 'Высокая мода на подиуме в Париже, динамичный свет софитов, замедленная съемка 120fps',
-    date: 'Из Ленты'
-  }
-];
-
-// Начальные альбомы
-const INITIAL_ALBUMS = [
-  { 
-    id: 'a1', 
-    title: 'Киберпанк & Неон', 
-    cover: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=400&auto=format&fit=crop',
-    itemIds: ['c1', 'c4']
-  },
-  { 
-    id: 'a2', 
-    title: 'Old Money 35mm', 
-    cover: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400&auto=format&fit=crop',
-    itemIds: ['c2']
-  },
-  { 
-    id: 'a3', 
-    title: 'Cinematic Video', 
-    cover: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=400&auto=format&fit=crop',
-    itemIds: ['c1', 'c4']
-  },
-  { 
-    id: 'a4', 
-    title: 'Concept Art & 3D', 
-    cover: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?q=80&w=400&auto=format&fit=crop',
-    itemIds: ['c3']
-  }
-];
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -154,14 +50,9 @@ const Profile = () => {
   // Фильтр типа контента: 'all' | 'photo' | 'video'
   const [mediaTypeFilter, setMediaTypeFilter] = useState('all');
 
-  // Баланс токенов
-  const [balance, setBalance] = useState(() => {
-    const saved = localStorage.getItem('morphai_balance');
-    return saved ? parseInt(saved, 10) : 120;
-  });
-
-  // Пользователь Telegram WebApp
-  const [tgUser, setTgUser] = useState(null);
+  // Баланс токенов и пользователь из UserContext
+  const { currentUser, balance, setBalance, refreshUser } = useUser();
+  const [tgUser, setTgUser] = useState(currentUser);
 
   // Избранные из ленты
   const [likedFeedItems, setLikedFeedItems] = useState(DEMO_LIKED_ITEMS);
@@ -204,16 +95,35 @@ const Profile = () => {
     } catch (e) {}
   };
 
-  // Загрузка данных пользователя Telegram и локальных сохранений
+  // Загрузка реальных генераций пользователя с бэкенда
   useEffect(() => {
-    try {
-      if (WebApp?.initDataUnsafe?.user) {
-        setTgUser(WebApp.initDataUnsafe.user);
+    if (currentUser) {
+      setTgUser(currentUser);
+      const id = currentUser.telegram_id || currentUser.id;
+      if (id) {
+        fetchUserGenerations(id).then((serverGens) => {
+          if (serverGens && serverGens.length > 0) {
+            const mapped = serverGens.map((g) => ({
+              id: g.id || g.task_id,
+              chatId: 'chat-1',
+              title: g.prompt?.slice(0, 32) || 'Генерация',
+              type: g.task_type === 'video' ? 'video' : 'photo',
+              media: g.result_url || '',
+              thumb: g.result_url || 'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=600&auto=format&fit=crop',
+              model: g.model_name || 'MorphAI',
+              cost: g.credits_charged || 10,
+              prompt: g.prompt,
+              date: new Date(g.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
+            }));
+            setMyCreations(mapped);
+          }
+        });
       }
-    } catch (e) {
-      console.log('TG user read error:', e);
     }
+  }, [currentUser]);
 
+  // Загрузка локальных сохранений
+  useEffect(() => {
     try {
       const savedLiked = localStorage.getItem('morphai_liked_feed');
       if (savedLiked) {
@@ -223,23 +133,12 @@ const Profile = () => {
         }
       }
     } catch (err) {}
-
-    try {
-      const savedCreations = localStorage.getItem('morphai_creations');
-      if (savedCreations) {
-        const parsed = JSON.parse(savedCreations);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setMyCreations(parsed);
-        }
-      }
-    } catch (err) {}
   }, []);
 
   // Сохранение баланса
   const handleUpdateBalance = (addedAmount) => {
     const newBal = balance + addedAmount;
     setBalance(newBal);
-    localStorage.setItem('morphai_balance', newBal.toString());
     triggerHaptic('success');
     setShowRechargeModal(false);
     showToast(t('tokensCredited', { amount: addedAmount }), 'token');

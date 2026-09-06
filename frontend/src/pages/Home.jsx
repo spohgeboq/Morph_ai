@@ -31,20 +31,20 @@ import {
   Upload
 } from 'lucide-react';
 
+import { useUser } from '../components/UserContext';
+
 const Home = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { t, translateDynamic } = useLanguage();
+  const { balance, setBalance } = useUser();
 
-  // Баланс
-  const [balance, setBalance] = useState(120);
-
-  // Список моделей ИИ для генерации фото и видео (для сказок модель зашита в коде!)
+  // Список моделей ИИ для генерации фото и видео
   const aiModels = [
-    { id: 'flux', name: 'Flux 1.1 Pro', tag: 'Фото 4K', desc: 'Максимальный реализм и детализация лиц', cost: 5 },
-    { id: 'kling', name: 'Kling 1.5 HD', tag: 'Видео', desc: 'Кинематографичные видео 1080p с плавным движением', cost: 12 },
-    { id: 'midjourney', name: 'Midjourney v6', tag: 'Арт', desc: 'Художественные образы и фэнтези стили', cost: 6 },
-    { id: 'sdxl', name: 'SDXL Turbo', tag: 'Экспресс', desc: 'Мгновенная генерация за 3 секунды', cost: 3 }
+    { id: 'flux-pro', name: 'Flux 1.1 Pro', tag: 'Фото 4K', desc: 'Максимальный реализм и детализация лиц', cost: 10 },
+    { id: 'kling-hd', name: 'Kling AI', tag: 'Видео', desc: 'Кинематографичные видео 1080p с плавным движением', cost: 12 },
+    { id: 'seedance', name: 'Seedance', tag: 'Видео 6/10/15с', desc: 'Видео с гибким выбором длительности генерации', cost: 12 },
+    { id: 'nano-banana', name: 'Nano Banana', tag: 'Digital Арт', desc: 'Яркие digital-арты и концептуальные иллюстрации', cost: 8 }
   ];
   const [selectedModel, setSelectedModel] = useState(aiModels[0]);
   const [showModelModal, setShowModelModal] = useState(false);
@@ -175,7 +175,7 @@ const Home = () => {
       type: 'photo',
       title: 'Anime Cyber Girl',
       category: 'photo',
-      model: 'Midjourney v6',
+      model: 'Flux 1.1 Pro',
       cost: 8,
       thumb: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600&auto=format&fit=crop',
       prompt: 'Аниме киберпанк девушка с неоновыми аксессуарами, студийная отрисовка в стиле Makoto Shinkai 4K',
@@ -208,33 +208,18 @@ const Home = () => {
     }
   };
 
-  // Генерация по выбранному шаблону
+  // Генерация по выбранному шаблону: переход в реальную студию создания
   const handleGenerateFromTemplate = () => {
     if (!selectedTemplate) return;
-    if (balance < selectedTemplate.cost) {
-      showToast('Недостаточно кредитов! Пополните баланс.', 'error');
-      setShowRechargeModal(true);
-      return;
-    }
-
-    const currentTemplate = selectedTemplate;
-    setIsGenerating(true);
-    
-    setTimeout(() => {
-      setIsGenerating(false);
-      setBalance(b => b - currentTemplate.cost);
-      setSelectedTemplate(null);
-      setGeneratedResult({
-        type: currentTemplate.type,
-        title: `Результат: ${currentTemplate.title}`,
-        hero: templateVariable || 'Ваш персонаж',
-        cover: userPhoto || currentTemplate.thumb,
-        videoUrl: currentTemplate.videoUrl,
-        text: `Сгенерировано нейросетью ${currentTemplate.model} по стилю «${currentTemplate.title}». ${userPhoto ? 'С заменой вашего лица.' : ''} ${templateVariable ? `Параметр: ${templateVariable}.` : ''}`
-      });
-      setUserPhoto(null);
-      setTemplateVariable('');
-    }, 2200);
+    const modelToUse = (selectedTemplate.model || '').toLowerCase().includes('kling') ? 'kling-hd' : 'flux-pro';
+    const finalPrompt = selectedTemplate.prompt + (templateVariable ? ` (${selectedTemplate.variableName}: ${templateVariable})` : '');
+    setSelectedTemplate(null);
+    navigate('/create', {
+      state: {
+        model: modelToUse,
+        prompt: finalPrompt,
+      }
+    });
   };
 
   // Модалка сказки
@@ -309,40 +294,24 @@ const Home = () => {
     }, 280);
   };
 
-  // Быстрый запуск из Magic Bar
+  // Быстрый запуск из Magic Bar: перенаправление в реальную Студию
   const handleMagicSubmit = (e) => {
     e.preventDefault();
     if (!magicPrompt.trim()) return;
 
-    if (balance < selectedModel.cost) {
-      showToast('Недостаточно кредитов! Пополните баланс.', 'error');
-      setShowRechargeModal(true);
-      return;
-    }
-
-    setIsGenerating(true);
-    setTimeout(() => {
-      setIsGenerating(false);
-      setBalance(b => b - selectedModel.cost);
-      setGeneratedResult({
-        type: 'image',
-        title: `Результат: ${selectedModel.name}`,
-        hero: magicPrompt,
-        cover: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600&auto=format&fit=crop',
-        text: `Сгенерировано нейросетью ${selectedModel.name} по промпту: «${magicPrompt}». Высокое разрешение 4K.`
-      });
-      setMagicPrompt('');
-    }, 2000);
+    const p = magicPrompt.trim();
+    const modelToUse = selectedModel?.id || 'kling-hd';
+    setMagicPrompt('');
+    navigate('/create', {
+      state: {
+        model: modelToUse,
+        prompt: p
+      }
+    });
   };
 
-  // Генерация сказки (модель уже зашита в логике: Claude 3.5 Sonnet + Flux)
+  // Генерация сказки через реальный ИИ
   const handleGenerateStory = () => {
-    if (balance < 10) {
-      showToast('Недостаточно кредитов! Пополните баланс.', 'error');
-      setShowRechargeModal(true);
-      return;
-    }
-
     const char = characterName.trim() || 'Алиса';
     const genreNames = {
       fairy: 'Волшебная сказка',
@@ -351,22 +320,13 @@ const Home = () => {
       fantasy: 'Фэнтези приключение'
     };
 
-    setIsGenerating(true);
-    setTimeout(() => {
-      setIsGenerating(false);
-      setShowStoryModal(false);
-      setBalance(b => b - 10);
-
-      setGeneratedResult({
-        type: 'story',
-        title: `${genreNames[storyGenre]}: «Путь ${char}»`,
-        hero: char,
-        genre: genreNames[storyGenre],
-        cover: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=600&auto=format&fit=crop',
-        text: `В тихом королевстве, где звёзды шептали древние тайны, юный ${char} находит сияющий артефакт, способный менять саму ткань времени. Преодолев сумрачный лес и загадки древних стражей, ${char} делает решающий выбор, принося гармонию в мир. Легенда о подвиге навсегда осталась в сердцах людей, напоминая, что истинная магия живет в смелости. Финал сказки настал, оставив теплый свет надежды.`,
-        isFinished: true
-      });
-    }, 2000);
+    setShowStoryModal(false);
+    navigate('/create', {
+      state: {
+        model: 'gpt-4o',
+        prompt: `Напиши захватывающую историю в жанре «${genreNames[storyGenre] || 'Сказка'}» про персонажа по имени ${char}. Добавь драматургию, яркие образы и неожиданный финал.`
+      }
+    });
   };
 
   // Повторить результат референса

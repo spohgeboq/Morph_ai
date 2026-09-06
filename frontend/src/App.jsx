@@ -10,6 +10,8 @@ import Create from './pages/Create';
 import Chats from './pages/Chats';
 import Profile from './pages/Profile';
 
+import { UserProvider } from './components/UserContext';
+
 function App() {
   useEffect(() => {
     try {
@@ -24,18 +26,20 @@ function App() {
 
   return (
     <LanguageProvider>
-      <ToastProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/feed" element={<Feed />} />
-            <Route path="/create" element={<Create />} />
-            <Route path="/chats" element={<Chats />} />
-            <Route path="/profile" element={<Profile />} />
-          </Routes>
-          <BottomNav />
-        </BrowserRouter>
-      </ToastProvider>
+      <UserProvider>
+        <ToastProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/feed" element={<Feed />} />
+              <Route path="/create" element={<Create />} />
+              <Route path="/chats" element={<Chats />} />
+              <Route path="/profile" element={<Profile />} />
+            </Routes>
+            <BottomNav />
+          </BrowserRouter>
+        </ToastProvider>
+      </UserProvider>
     </LanguageProvider>
   );
 }
