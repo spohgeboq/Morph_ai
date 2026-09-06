@@ -9,16 +9,23 @@
     "migrate": "psql -U postgres -d morphi_ai_db -f migrations/001_init.sql",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["ai", "telegram", "bot", "morphai"],
+  "keywords": [
+    "ai",
+    "telegram",
+    "bot",
+    "morphai"
+  ],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1127.0",
     "@runwayml/sdk": "^1.0.0",
     "axios": "^1.7.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "multer": "^2.3.0",
     "node-telegram-bot-api": "^0.66.0",
     "pg": "^8.23.0",
     "uuid": "^11.1.0"

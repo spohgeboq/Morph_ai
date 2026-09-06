@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { useToast } from '../components/ToastContext';
 import { useLanguage } from '../components/LanguageContext';
 import { useUser } from '../components/UserContext';
-import { fetchModels, requestGeneration, checkTaskStatus } from '../services/api';
+import { fetchModels, requestGeneration, checkTaskStatus, uploadFileToR2 } from '../services/api';
 import { 
   Search, 
   Sparkles, 
@@ -427,13 +427,30 @@ const Create = () => {
     setIsPolling(false);
   };
 
-  // Загрузка референсов (до 10 фото)
-  const handleUploadImages = (e) => {
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+  // Загрузка референсов (до 10 фото) в Cloudflare R2
+  const handleUploadImages = async (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
-    const newUrls = files.map(file => URL.createObjectURL(file));
-    setReferenceImages(prev => [...prev, ...newUrls].slice(0, 10));
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    setIsUploadingImage(true);
+    showToast('Загрузка фото в облако R2...', 'info');
+
+    try {
+      for (const file of files) {
+        const uploaded = await uploadFileToR2(file, 'references');
+        if (uploaded?.url) {
+          setReferenceImages(prev => [...prev, uploaded.url].slice(0, 10));
+        }
+      }
+      showToast('Фото успешно загружено в R2!', 'success');
+    } catch (err) {
+      console.error('Upload error:', err);
+      showToast(err.message || 'Ошибка загрузки фото', 'error');
+    } finally {
+      setIsUploadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   // Удаление отдельного референса

@@ -181,3 +181,28 @@ export async function fetchUserGenerations(telegramId, limit = 20, offset = 0) {
     return [];
   }
 }
+
+/**
+ * Загрузить файл в Cloudflare R2 через бэкенд.
+ *
+ * @param {File} file - Файл с устройства пользователя
+ * @param {string} [folder='uploads'] - Папка в bucket (e.g. 'references', 'faceswap')
+ * @returns {Promise<{url: string, key: string, size: number, mimeType: string}>}
+ */
+export async function uploadFileToR2(file, folder = 'uploads') {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('folder', folder);
+
+  const res = await fetch(`${API_BASE}/upload`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || 'Ошибка загрузки файла');
+  }
+  return data.file;
+}
+

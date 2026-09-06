@@ -31,6 +31,7 @@ const usersRouter = require('./routes/users');
 const generateRouter = require('./routes/generate');
 const webhooksRouter = require('./routes/webhooks');
 const templatesRouter = require('./routes/templates');
+const uploadRouter = require('./routes/upload');
 
 // Бот
 const { initBot } = require('./bot/index');
@@ -99,6 +100,7 @@ app.use('/api/users', usersRouter);
 app.use('/api/generate', generateRouter);
 app.use('/api/webhooks', webhooksRouter);
 app.use('/api/templates', templatesRouter);
+app.use('/api/upload', uploadRouter);
 
 // Webhook для Telegram (если в production mode)
 if (bot && process.env.WEBHOOK_URL) {

@@ -12,6 +12,7 @@ const db = require('../../db');
 const { chargeCredits, refundCredits } = require('../../utils/credits');
 const { createTask } = require('../../utils/taskQueue');
 const { faceSwapTemplatesKeyboard } = require('../keyboards');
+const storage = require('../../services/storage.service');
 
 // Состояния для Face Swap flow
 const faceSwapStates = new Map();
@@ -102,12 +103,26 @@ function setupFaceSwapHandler(bot) {
       // Получаем file_id самого большого фото
       const photo = msg.photo[msg.photo.length - 1];
       const fileInfo = await bot.getFile(photo.file_id);
-      const fileUrl = `https://api.telegram.org/file/bot${process.env.TELEGRAM_BOT_TOKEN}/${fileInfo.file_path}`;
+      const tgFileUrl = `https://api.telegram.org/file/bot${process.env.TELEGRAM_BOT_TOKEN}/${fileInfo.file_path}`;
+
+      // Сохраняем фото в Cloudflare R2 для безопасного и публичного доступа
+      let finalFaceUrl = tgFileUrl;
+      if (storage.isReady()) {
+        try {
+          const uploaded = await storage.uploadFromUrl({
+            sourceUrl: tgFileUrl,
+            folder: 'faceswap/selfies',
+          });
+          finalFaceUrl = uploaded.url;
+        } catch (uploadErr) {
+          console.error('[Bot/FaceSwap] Ошибка выгрузки в R2, fallback на Telegram URL:', uploadErr.message);
+        }
+      }
 
       // Сохраняем face_photo_url
       await db.query(
         'UPDATE users SET face_photo_url = $1, updated_at = NOW() WHERE telegram_id = $2',
-        [fileUrl, userId]
+        [finalFaceUrl, userId]
       );
 
       await bot.sendMessage(chatId, '✅ Селфи сохранено! Запускаю Face Swap...');
