@@ -19,7 +19,7 @@ import {
   X
 } from 'lucide-react';
 import { useUser } from '../components/UserContext';
-import { fetchUserGenerations } from '../services/api';
+import { fetchUserGenerations, checkTaskStatus } from '../services/api';
 
 // Базовые соответствия стоимости моделей
 const MODEL_COSTS = {
@@ -119,8 +119,17 @@ const Chats = () => {
   // Выбранный чат для открытия полноэкранного окна сессии
   const [activeChat, setActiveChat] = useState(null);
 
-  // Автоматическое открытие чата при переходе из Профиля (истории генераций)
+  // Автоматическое открытие чата при переходе из Создать (newChat) или Профиля (истории генераций)
   useEffect(() => {
+    if (location.state?.newChat) {
+      const newSession = location.state.newChat;
+      setChats(prev => {
+        const filtered = prev.filter(c => c.id !== newSession.id);
+        return [newSession, ...filtered];
+      });
+      setActiveChat(newSession);
+      return;
+    }
     if (location.state?.chatId) {
       const found = chats.find(c => c.id === location.state.chatId);
       if (found) {
@@ -172,6 +181,79 @@ const Chats = () => {
       }
     }
   }, [location.state]);
+
+  // Polling для незавершенных асинхронных генераций (видео / фото) в чате
+  useEffect(() => {
+    if (!activeChat) return;
+
+    const pendingMsg = activeChat.messages?.find(
+      m => m.sender === 'ai' && (m.status === 'pending' || (!m.mediaUrl && m.type !== 'text')) && m.taskId
+    );
+    if (!pendingMsg) return;
+
+    let isSubscribed = true;
+    const interval = setInterval(async () => {
+      try {
+        const res = await checkTaskStatus(pendingMsg.taskId);
+        if (!isSubscribed) return;
+
+        if (res?.status === 'completed') {
+          clearInterval(interval);
+          const resultUrl = res.resultUrl || res.output?.video || res.output?.image_url;
+
+          setActiveChat(prev => {
+            if (!prev) return null;
+            const updatedMessages = prev.messages.map(m => {
+              if (m.id === pendingMsg.id) {
+                return {
+                  ...m,
+                  status: 'completed',
+                  mediaUrl: resultUrl,
+                  text: prev.category === 'video' ? '🎬 Ваше видео готово!' : '🎨 Ваше изображение готово!',
+                };
+              }
+              return m;
+            });
+            const updated = {
+              ...prev,
+              preview: resultUrl || prev.preview,
+              isGenerating: false,
+              messages: updatedMessages,
+            };
+            setChats(all => all.map(c => (c.id === prev.id ? updated : c)));
+            return updated;
+          });
+          showToast('Шедевр готов! Результат доставлен.', 'success');
+        } else if (res?.status === 'failed') {
+          clearInterval(interval);
+          setActiveChat(prev => {
+            if (!prev) return null;
+            const updatedMessages = prev.messages.map(m => {
+              if (m.id === pendingMsg.id) {
+                return {
+                  ...m,
+                  status: 'failed',
+                  text: `❌ Ошибка генерации: ${res.errorMessage || 'Сбой провайдера'}. Кредиты возвращены.`,
+                };
+              }
+              return m;
+            });
+            const updated = { ...prev, isGenerating: false, messages: updatedMessages };
+            setChats(all => all.map(c => (c.id === prev.id ? updated : c)));
+            return updated;
+          });
+          showToast('Сбой генерации. Кредиты возвращены на баланс.', 'error');
+        }
+      } catch (err) {
+        console.error('Polling in chat error:', err);
+      }
+    }, 3000);
+
+    return () => {
+      isSubscribed = false;
+      clearInterval(interval);
+    };
+  }, [activeChat?.id, activeChat?.messages]);
 
   // Поле ввода для продолжения диалога
   const [replyInput, setReplyInput] = useState('');
@@ -564,18 +646,43 @@ const Chats = () => {
                   </div>
                 ) : (
                   <div className="ai-bubble-card">
-                    {msg.mediaUrl && (
+                    {msg.status === 'pending' || (!msg.mediaUrl && msg.type !== 'text') ? (
+                      <div className="ai-pending-container" style={{ padding: '20px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', textAlign: 'center' }}>
+                        <div className="generation-spinner" style={{ width: '32px', height: '32px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#ff4d8d', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                        <div style={{ fontSize: '13px', color: '#f3f4f6', fontWeight: 500 }}>{msg.text || 'Генерация в процессе...'}</div>
+                        <div style={{ fontSize: '11px', color: '#9ca3af' }}>⏳ Создаём шедевр, подождите немного...</div>
+                      </div>
+                    ) : msg.mediaUrl ? (
                       <div className="ai-media-container">
-                        <img src={msg.mediaUrl} alt="Результат" className="ai-result-media" />
+                        {msg.type === 'video' || (msg.mediaUrl && msg.mediaUrl.includes('.mp4')) ? (
+                          <video 
+                            src={msg.mediaUrl} 
+                            controls 
+                            autoPlay 
+                            loop 
+                            playsInline 
+                            className="ai-result-media" 
+                            style={{ width: '100%', borderRadius: '12px', maxHeight: '420px', objectFit: 'contain', backgroundColor: '#000' }}
+                          />
+                        ) : (
+                          <img src={msg.mediaUrl} alt="Результат" className="ai-result-media" />
+                        )}
                         
                         {/* Кнопка быстрого скачивания в правом верхнем углу кадра */}
-                        <button 
+                        <a 
+                          href={msg.mediaUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          download
                           className="ai-media-download-floating-btn"
-                          onClick={() => showToast('Шедевр сохранен в галерею в HD!', 'success')}
-                          title="Скачать шедевр в HD"
+                          title="Открыть или скачать в HD"
                         >
                           <Download size={15} />
-                        </button>
+                        </a>
+                      </div>
+                    ) : (
+                      <div className="ai-text-result-box" style={{ padding: '14px 16px', fontSize: '14px', lineHeight: 1.6, color: '#f3f4f6', whiteSpace: 'pre-wrap' }}>
+                        {msg.text}
                       </div>
                     )}
 
@@ -605,7 +712,9 @@ const Chats = () => {
                       )}
 
                       <div className="ai-bubble-status-row">
-                        <span className="ai-status-text">✓ {t('ready')} • {activeChat.versionName}</span>
+                        <span className="ai-status-text">
+                          {msg.status === 'pending' ? '⏳ Обработка' : msg.status === 'failed' ? '❌ Сбой' : `✓ ${t('ready')}`} • {activeChat.versionName || activeChat.modelName}
+                        </span>
                         <span className="bubble-time-stamp">{msg.time}</span>
                       </div>
                     </div>

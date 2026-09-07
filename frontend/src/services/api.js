@@ -1,6 +1,8 @@
 import WebApp from '@twa-dev/sdk';
 
-const API_BASE = '/api';
+// При локальной разработке стучимся напрямую в бэкенд на порт 5000 независимо от порта Vite (5173, 5174 и т.д.)
+const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+const API_BASE = isLocal ? 'http://localhost:5000/api' : '/api';
 
 /**
  * Получить данные текущего пользователя Telegram WebApp

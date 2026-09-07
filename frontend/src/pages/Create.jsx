@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useToast } from '../components/ToastContext';
 import { useLanguage } from '../components/LanguageContext';
 import { useUser } from '../components/UserContext';
@@ -347,6 +347,7 @@ export const AI_MODELS_DB = [
 ];
 
 const Create = () => {
+  const navigate = useNavigate();
   const { showToast } = useToast();
   const { t, translateDynamic } = useLanguage();
   const { currentUser, balance, setBalance, refreshUser } = useUser();
@@ -503,63 +504,56 @@ const Create = () => {
         setBalance(prev => Math.max(0, prev - currentCost));
       }
 
-      // 1. Текстовая генерация завершена синхронно
-      if (res.result?.text) {
-        setGeneratedResult({
-          type: 'text',
-          text: res.result.text,
-          model: selectedModel.name,
-          version: selectedVersion?.name || selectedModel.name,
-          cost: currentCost
-        });
-        setGenerationSuccess(true);
-        showToast('Текст успешно сгенерирован!', 'success');
-        refreshUser();
-      } 
-      // 2. Асинхронная генерация медиа (видео/фото)
-      else if (res.task_id) {
-        setIsPolling(true);
-        setPollingStatusText('Задача в обработке нейросетью...');
-        showToast('Генерация запущена в нейросети!', 'success');
-
-        let attempts = 0;
-        const maxAttempts = 40;
-        const pollInterval = setInterval(async () => {
-          attempts++;
-          try {
-            const statusRes = await checkTaskStatus(res.task_id);
-            if (statusRes?.status === 'completed') {
-              clearInterval(pollInterval);
-              setIsPolling(false);
-              setGeneratedResult({
-                type: isVideo ? 'video' : 'photo',
-                url: statusRes.resultUrl || statusRes.output?.video || statusRes.output?.image_url,
-                model: selectedModel.name,
-                version: selectedVersion?.name || selectedModel.name,
-                cost: currentCost
-              });
-              setGenerationSuccess(true);
-              showToast('Шедевр успешно создан!', 'success');
-              refreshUser();
-            } else if (statusRes?.status === 'failed') {
-              clearInterval(pollInterval);
-              setIsPolling(false);
-              showToast('Ошибка генерации. Кредиты автоматически возвращены!', 'error');
-              refreshUser();
-            } else {
-              setPollingStatusText(`Создание шедевра... (${attempts * 3} сек)`);
-            }
-          } catch (e) {
-            console.error('Polling error:', e);
+      // Создаем новую сессию для раздела "Чаты"
+      const newChatSession = {
+        id: 'chat_' + (res.task_id || Date.now()),
+        title: userPrompt.trim().slice(0, 35) || 'Генерация',
+        modelId: selectedModel.id,
+        modelName: selectedModel.name,
+        versionName: selectedVersion?.name || selectedModel.name,
+        cost: currentCost,
+        category: selectedModel.category,
+        time: 'Только что',
+        dateStr: 'Сегодня',
+        preview: res.result?.url || null,
+        taskId: res.task_id || null,
+        isGenerating: !res.result?.text,
+        messages: [
+          {
+            id: 'm_u_' + Date.now(),
+            sender: 'user',
+            text: userPrompt.trim(),
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          },
+          {
+            id: 'm_a_' + Date.now(),
+            sender: 'ai',
+            type: selectedModel.category === 'video' ? 'video' : (selectedModel.category === 'text' ? 'text' : 'image'),
+            prompt: userPrompt.trim(),
+            taskId: res.task_id || null,
+            mediaUrl: res.result?.url || null,
+            text: res.result?.text || (selectedModel.category === 'video' ? '🎬 Генерирую видео через нейросеть...' : '🎨 Создаю изображение...'),
+            status: res.result?.text ? 'completed' : 'pending',
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           }
+        ]
+      };
 
-          if (attempts >= maxAttempts) {
-            clearInterval(pollInterval);
-            setIsPolling(false);
-            setPollingStatusText('Генерация занимает больше времени, результат появится в Профиле.');
-          }
-        }, 3000);
+      // Сохраняем сессию в историю чатов
+      try {
+        const saved = localStorage.getItem('morphai_chats_history');
+        const existing = saved ? JSON.parse(saved) : [];
+        localStorage.setItem('morphai_chats_history', JSON.stringify([newChatSession, ...existing.filter(c => c.id !== newChatSession.id)]));
+      } catch (e) {
+        console.error('Save to chats error:', e);
       }
+
+      showToast('Генерация запущена! Перенаправляем в чат...', 'success');
+      refreshUser();
+
+      // Немедленно перенаправляем пользователя в чат с этой ИИ-моделью!
+      navigate('/chats', { state: { newChat: newChatSession, chatId: newChatSession.id } });
+      return;
     } catch (err) {
       console.error('[Create] Generation error:', err);
       showToast(err.message || 'Ошибка генерации. Попробуйте еще раз.', 'error');
