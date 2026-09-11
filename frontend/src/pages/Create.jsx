@@ -2,6 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useToast } from '../components/ToastContext';
 import { useLanguage } from '../components/LanguageContext';
+import { useCurrency } from '../components/CurrencyContext';
 import { useUser } from '../components/UserContext';
 import { fetchModels, requestGeneration, checkTaskStatus, uploadFileToR2 } from '../services/api';
 import { 
@@ -19,7 +20,8 @@ import {
   Film,
   Download,
   Copy,
-  RotateCcw
+  RotateCcw,
+  BookOpen
 } from 'lucide-react';
 
 // База данных моделей MorphAI (синхронизирована с бэкендом: Видео -> Фото -> Текст)
@@ -30,15 +32,15 @@ export const AI_MODELS_DB = [
     name: 'Kling AI',
     category: 'video',
     preview: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=600&auto=format&fit=crop&q=80',
-    tags: ['Видео 1080p', 'Кино-физика'],
+    tags: ['1080p', 'Кино'],
     desc: 'Плавные кинематографичные видео и анимация персонажей',
     cost: 12,
     defaultDuration: 6,
     allowDurationChoice: false,
     versions: [
-      { id: 'kling-ultra', name: 'Kling 3.0', cost: 16, tier: 'high', tierLabel: 'Максимум' },
-      { id: 'kling-std', name: 'Kling 1.5 HD', cost: 12, tier: 'medium', tierLabel: 'Стандарт' },
-      { id: 'kling-lite', name: 'Kling Fast', cost: 8, tier: 'lite', tierLabel: 'Лайт' },
+      { id: 'kling-ultra', name: 'Kling 3.0', cost: 16 },
+      { id: 'kling-std', name: 'Kling 1.5 HD', cost: 12 },
+      { id: 'kling-lite', name: 'Kling Fast', cost: 8 },
     ],
     aspectRatios: ['16:9', '9:16', '1:1'],
     samplePrompts: [
@@ -48,18 +50,18 @@ export const AI_MODELS_DB = [
   },
   {
     id: 'hailuo',
-    name: 'Hailuo (MiniMax)',
+    name: 'Hailuo',
     category: 'video',
     preview: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=600&auto=format&fit=crop&q=80',
-    tags: ['Реалистичное движение', 'HD'],
+    tags: ['Реализм', 'HD'],
     desc: 'Генерация сверхреалистичных сцен с естественной физикой людей и природы',
     cost: 14,
     defaultDuration: 6,
     allowDurationChoice: false,
     versions: [
-      { id: 'hailuo-ultra', name: 'Hailuo H3', cost: 16, tier: 'high', tierLabel: 'Максимум' },
-      { id: 'hailuo-std', name: 'Hailuo H2', cost: 13, tier: 'medium', tierLabel: 'Стандарт' },
-      { id: 'hailuo-lite', name: 'Hailuo Lite', cost: 9, tier: 'lite', tierLabel: 'Лайт' },
+      { id: 'hailuo-ultra', name: 'Hailuo H3', cost: 16 },
+      { id: 'hailuo-std', name: 'Hailuo H2', cost: 13 },
+      { id: 'hailuo-lite', name: 'Hailuo Lite', cost: 9 },
     ],
     aspectRatios: ['16:9', '9:16', '1:1'],
     samplePrompts: [
@@ -68,29 +70,8 @@ export const AI_MODELS_DB = [
     ]
   },
   {
-    id: 'luma-dream',
-    name: 'Luma Dream Machine',
-    category: 'video',
-    preview: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&auto=format&fit=crop&q=80',
-    tags: ['Оживление фото', 'Динамика'],
-    desc: 'Превращает статичные фотографии в реалистичные видеоролики',
-    cost: 10,
-    defaultDuration: 6,
-    allowDurationChoice: false,
-    versions: [
-      { id: 'luma-ultra', name: 'Dream 1.5 HD', cost: 14, tier: 'high', tierLabel: 'Максимум' },
-      { id: 'luma-std', name: 'Dream 1.0', cost: 10, tier: 'medium', tierLabel: 'Стандарт' },
-      { id: 'luma-lite', name: 'Dream Turbo', cost: 7, tier: 'lite', tierLabel: 'Лайт' },
-    ],
-    aspectRatios: ['16:9', '9:16', '1:1'],
-    samplePrompts: [
-      'Оживление портрета: легкая улыбка и колыхание волос от ветра',
-      'Оживление фото пейзажа с движущимися облаками'
-    ]
-  },
-  {
     id: 'runway-gen4',
-    name: 'Runway Gen-4',
+    name: 'GenAi',
     category: 'video',
     preview: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
     tags: ['VFX Кино', 'Slow-Mo'],
@@ -99,11 +80,11 @@ export const AI_MODELS_DB = [
     defaultDuration: 6,
     allowDurationChoice: false,
     versions: [
-      { id: 'runway-ultra', name: 'Runway Gen-4', cost: 18, tier: 'high', tierLabel: 'Максимум' },
-      { id: 'runway-std', name: 'Runway Gen-4 Turbo', cost: 15, tier: 'medium', tierLabel: 'Стандарт' },
-      { id: 'runway-lite', name: 'Runway Gen-3', cost: 10, tier: 'lite', tierLabel: 'Лайт' },
+      { id: 'runway-ultra', name: 'Runway Gen-4', cost: 18 },
+      { id: 'runway-std', name: 'Runway Gen-4 Turbo', cost: 15 },
+      { id: 'runway-lite', name: 'Runway Gen-3', cost: 10 },
     ],
-    aspectRatios: ['16:9', '9:16', '1:1'],
+    aspectRatios: ['16:9', '9:16'],
     samplePrompts: [
       'Замедленный взрыв неоновых кристаллов в темноте, осколки света',
       'Кинематографичная сцена погони в футуристичном мегаполисе'
@@ -114,21 +95,42 @@ export const AI_MODELS_DB = [
     name: 'Seedance',
     category: 'video',
     preview: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600&auto=format&fit=crop&q=80',
-    tags: ['Гибкое время', 'Анимация'],
+    tags: ['6–15 сек', 'Анимация'],
     desc: 'Передовая видеомодель с выбором длительности генерации (6, 10 или 15 сек)',
     cost: 12,
     defaultDuration: 6,
     allowDurationChoice: true,
     durationOptions: [6, 10, 15],
     versions: [
-      { id: 'seedance-ultra', name: 'Seedance 2.5', cost: 16, tier: 'high', tierLabel: 'Максимум' },
-      { id: 'seedance-std', name: 'Seedance 2.0', cost: 12, tier: 'medium', tierLabel: 'Стандарт' },
-      { id: 'seedance-lite', name: 'Seedance Lite', cost: 8, tier: 'lite', tierLabel: 'Лайт' },
+      { id: 'seedance-ultra', name: 'Seedance 2.5', cost: 16 },
+      { id: 'seedance-std', name: 'Seedance 2.0', cost: 12 },
+      { id: 'seedance-lite', name: 'Seedance Lite', cost: 8 },
     ],
     aspectRatios: ['16:9', '9:16', '1:1'],
     samplePrompts: [
       'Красочный танец в неоновом дожде под электронную музыку',
       'Анимированная сцена превращения бабочки в созвездие звезд'
+    ]
+  },
+  {
+    id: 'veo-3-1',
+    name: 'Veo 3.1',
+    category: 'video',
+    preview: 'https://images.unsplash.com/photo-1536240478700-b869070f9279?w=600&auto=format&fit=crop&q=80',
+    tags: ['Google DeepMind', '4K Кино'],
+    desc: 'Передовая кинематографичная видеомодель от Google с высокой детализацией',
+    cost: 16,
+    defaultDuration: 4,
+    allowDurationChoice: false,
+    versions: [
+      { id: 'veo-ultra', name: 'Veo 3.1 Pro', cost: 18 },
+      { id: 'veo-std', name: 'Veo 3.1 Standard', cost: 16 },
+      { id: 'veo-lite', name: 'Veo 3.1 Fast', cost: 12 },
+    ],
+    aspectRatios: ['16:9', '9:16'],
+    samplePrompts: [
+      'Человек идет по пляжу в ветреную погоду, золотой закат, кинематографичный свет',
+      'Замедленный кинематографичный пролет камеры над неоновым мегаполисом'
     ]
   },
 
@@ -138,13 +140,13 @@ export const AI_MODELS_DB = [
     name: 'Flux',
     category: 'photo',
     preview: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&auto=format&fit=crop&q=80',
-    tags: ['Фото 8K', 'Портреты'],
+    tags: ['8K Фото', 'Портрет'],
     desc: 'Гиперреалистичные портреты и фото студийного качества',
     cost: 10,
     versions: [
-      { id: 'flux-ultra', name: 'Flux 1.1 Pro', cost: 12, tier: 'high', tierLabel: 'Максимум' },
-      { id: 'flux-std', name: 'Flux Dev', cost: 8, tier: 'medium', tierLabel: 'Стандарт' },
-      { id: 'flux-lite', name: 'Flux Schnell', cost: 5, tier: 'lite', tierLabel: 'Лайт' },
+      { id: 'flux-ultra', name: 'Flux 1.1 Pro', cost: 12 },
+      { id: 'flux-std', name: 'Flux Dev', cost: 8 },
+      { id: 'flux-lite', name: 'Flux Schnell', cost: 5 },
     ],
     aspectRatios: ['1:1', '9:16', '16:9', '4:5'],
     samplePrompts: [
@@ -157,13 +159,13 @@ export const AI_MODELS_DB = [
     name: 'Face Swap',
     category: 'photo',
     preview: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600&auto=format&fit=crop&q=80',
-    tags: ['Замена лица', 'Реализм'],
+    tags: ['Замена лица', '4K'],
     desc: 'Высокоточная замена лица на фото и шаблонах с сохранением мимики',
     cost: 10,
     versions: [
-      { id: 'fs-ultra', name: 'Face Swap Ultra 4K', cost: 14, tier: 'high', tierLabel: 'Максимум' },
-      { id: 'fs-std', name: 'Face Swap HD Standard', cost: 10, tier: 'medium', tierLabel: 'Стандарт' },
-      { id: 'fs-lite', name: 'Face Swap Fast Lite', cost: 6, tier: 'lite', tierLabel: 'Лайт' },
+      { id: 'fs-ultra', name: 'Face Swap Ultra 4K', cost: 14 },
+      { id: 'fs-std', name: 'Face Swap HD', cost: 10 },
+      { id: 'fs-lite', name: 'Face Swap Lite', cost: 6 },
     ],
     aspectRatios: ['1:1', '9:16', '16:9'],
     samplePrompts: [
@@ -172,60 +174,22 @@ export const AI_MODELS_DB = [
     ]
   },
   {
-    id: 'dall-e-3',
-    name: 'DALL-E 3',
+    id: 'gpt-image',
+    name: 'GPT Image',
     category: 'photo',
-    preview: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=600&auto=format&fit=crop&q=80',
-    tags: ['Иллюстрации', 'Сюрреализм'],
-    desc: 'Точное следование сложным подсказкам и яркая художественная визуализация',
-    cost: 8,
+    preview: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80',
+    tags: ['OpenAI', 'Фотореализм'],
+    desc: 'Новейшая генерация фотореалистичных изображений студийного качества и сложных композиций',
+    cost: 10,
     versions: [
-      { id: 'dall-e-ultra', name: 'DALL-E 3 HD', cost: 10, tier: 'high', tierLabel: 'Максимум' },
-      { id: 'dall-e-std', name: 'DALL-E 3', cost: 8, tier: 'medium', tierLabel: 'Стандарт' },
-      { id: 'dall-e-lite', name: 'DALL-E 3 Fast', cost: 5, tier: 'lite', tierLabel: 'Лайт' },
-    ],
-    aspectRatios: ['1:1', '16:9', '9:16'],
-    samplePrompts: [
-      'Абстрактная картина маслом в стиле кубизма, яркие контрасты',
-      'Футуристический город в стеклянном шаре среди пустыни'
-    ]
-  },
-  {
-    id: 'imagen-3',
-    name: 'Imagen 3',
-    category: 'photo',
-    preview: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600&auto=format&fit=crop&q=80',
-    tags: ['Google Фото', 'Фотореализм'],
-    desc: 'Передовая модель генерации изображений от Google с глубокой детализацией',
-    cost: 8,
-    versions: [
-      { id: 'imagen-ultra', name: 'Imagen 3 Ultra', cost: 10, tier: 'high', tierLabel: 'Максимум' },
-      { id: 'imagen-std', name: 'Imagen 3', cost: 8, tier: 'medium', tierLabel: 'Стандарт' },
-      { id: 'imagen-lite', name: 'Imagen 3 Fast', cost: 5, tier: 'lite', tierLabel: 'Лайт' },
+      { id: 'gpt-image-ultra', name: 'GPT Image 2', cost: 12 },
+      { id: 'gpt-image-std', name: 'GPT Image 1.5', cost: 8 },
+      { id: 'gpt-image-lite', name: 'GPT Image 1', cost: 5 },
     ],
     aspectRatios: ['1:1', '16:9', '9:16', '4:5'],
     samplePrompts: [
-      'Кинематографичный кадр из исторического фильма при естественном свете',
-      'Макросъемка капли росы на лепестке экзотического цветка'
-    ]
-  },
-  {
-    id: 'wan-image',
-    name: 'Wan Image',
-    category: 'photo',
-    preview: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
-    tags: ['Концепт-арт', 'Фэнтези'],
-    desc: 'Создание атмосферных пейзажей, фэнтези-артов и дизайн-иллюстраций',
-    cost: 6,
-    versions: [
-      { id: 'wan-ultra', name: 'Wan Image Pro', cost: 9, tier: 'high', tierLabel: 'Максимум' },
-      { id: 'wan-std', name: 'Wan Image', cost: 6, tier: 'medium', tierLabel: 'Стандарт' },
-      { id: 'wan-lite', name: 'Wan Image Fast', cost: 4, tier: 'lite', tierLabel: 'Лайт' },
-    ],
-    aspectRatios: ['9:16', '1:1', '16:9', '4:5'],
-    samplePrompts: [
-      'Заброшенный древний замок среди туманных гор, эпический свет',
-      'Парящие острова в небе на фоне заката'
+      'Рекламное фото вязаного кардигана на хромированном стуле в мягком студийном свете',
+      'Эстетичный студийный портрет крупным планом с мягким кинематографичным светом'
     ]
   },
   {
@@ -233,15 +197,15 @@ export const AI_MODELS_DB = [
     name: 'Nano Banana',
     category: 'photo',
     preview: 'https://images.unsplash.com/photo-1563089145-599997674d42?w=600&auto=format&fit=crop&q=80',
-    tags: ['Эксклюзив', 'Digital Арт'],
+    tags: ['Эксклюзив', 'Digital'],
     desc: 'Креативная генерация ярких digital-артов и дизайн-иллюстраций',
     cost: 8,
     versions: [
-      { id: 'nano-ultra', name: 'Nano Pro 2.0', cost: 10, tier: 'high', tierLabel: 'Максимум' },
-      { id: 'nano-std', name: 'Nano Turbo', cost: 8, tier: 'medium', tierLabel: 'Стандарт' },
-      { id: 'nano-lite', name: 'Nano Flash', cost: 5, tier: 'lite', tierLabel: 'Лайт' },
+      { id: 'nano-ultra', name: 'Nano Banana 2', cost: 10 },
+      { id: 'nano-std', name: 'Nano Banana 1 Pro', cost: 8 },
+      { id: 'nano-lite', name: 'Nano Banana 1', cost: 5 },
     ],
-    aspectRatios: ['9:16', '1:1', '16:9', '4:5'],
+    aspectRatios: ['1:1', '9:16', '16:9', '4:5'],
     samplePrompts: [
       'Яркий неоновый поп-арт с фруктами и космическими элементами',
       'Футуристический дизайн персонажа в стиле киберпанк'
@@ -252,13 +216,13 @@ export const AI_MODELS_DB = [
     name: 'Seedream',
     category: 'photo',
     preview: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=600&auto=format&fit=crop&q=80',
-    tags: ['Турбо', '3D Персонажи'],
+    tags: ['3D Аватар', 'Турбо'],
     desc: 'Сверхбыстрая генерация концепт-артов и мультяшных аватаров',
     cost: 6,
     versions: [
-      { id: 'sd-ultra', name: 'Seedream 4.0', cost: 8, tier: 'high', tierLabel: 'Максимум' },
-      { id: 'sd-std', name: 'Seedream 3.5', cost: 6, tier: 'medium', tierLabel: 'Стандарт' },
-      { id: 'sd-lite', name: 'Seedream Lite', cost: 4, tier: 'lite', tierLabel: 'Лайт' },
+      { id: 'sd-ultra', name: 'Seedream 5.0 Pro', cost: 8 },
+      { id: 'sd-std', name: 'Seedream 5.0 Lite', cost: 6 },
+      { id: 'sd-lite', name: 'Seedream 4.0', cost: 4 },
     ],
     aspectRatios: ['1:1', '9:16', '16:9'],
     samplePrompts: [
@@ -267,106 +231,117 @@ export const AI_MODELS_DB = [
     ]
   },
 
-  // ==================== 3. ТЕКСТОВЫЕ МОДЕЛИ (ПОСЛЕДНЕЕ МЕСТО) ====================
+  // ==================== 3. ИИ-СКАЗИТЕЛИ И МАСТЕРА ИСТОРИЙ ====================
   {
     id: 'gpt-4o',
-    name: 'OpenAI GPT',
+    name: 'GPT Сказки',
+    roleTitle: 'Сказки',
     category: 'text',
-    preview: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80',
-    tags: ['Копирайтинг', 'Идеи'],
-    desc: 'Написание вирусных постов, сценариев для Reels и креативных текстов',
+    preview: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
+    tags: ['Сказки', 'Притчи'],
+    desc: 'Добрые сказки на ночь, волшебные миры и поучительные притчи со смыслом',
     cost: 3,
     versions: [
-      { id: 'gpt-4o-ultra', name: 'GPT-4o Omni', cost: 4, tier: 'high', tierLabel: 'Максимум' },
-      { id: 'gpt-4o-std', name: 'GPT-4o Standard', cost: 3, tier: 'medium', tierLabel: 'Стандарт' },
-      { id: 'gpt-4o-mini', name: 'GPT-4o Mini', cost: 1, tier: 'lite', tierLabel: 'Лайт' },
+      { id: 'gpt-4o-ultra', name: 'GPT-4o', cost: 4 },
+      { id: 'gpt-4o-std', name: 'GPT-4o Standard', cost: 3 },
+      { id: 'gpt-4o-mini', name: 'GPT-4o Mini', cost: 1 },
     ],
     aspectRatios: [],
     samplePrompts: [
-      'Напиши 5 цепляющих сценариев для Reels про нейросети',
-      'Придумай концепцию продающего поста для запуска курса'
+      'Сказка о маленьком маячнике, который зажигал упавшие звезды',
+      'Добрая притча о старинных часах, считавших только счастливые мгновения'
     ]
   },
   {
     id: 'claude-sonnet',
-    name: 'Claude',
+    name: 'Claude Мистика',
+    roleTitle: 'Мистика',
     category: 'text',
-    preview: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&auto=format&fit=crop&q=80',
-    tags: ['Сценарии', 'Логика'],
-    desc: 'Глубокие тексты, статьи, драматургия и сложный сторителлинг',
+    preview: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=600&auto=format&fit=crop&q=80',
+    tags: ['Мистика', 'Тайны'],
+    desc: 'Загадочные мистические истории, городские легенды, саспенс и детективные тайны',
     cost: 3,
     versions: [
-      { id: 'claude-ultra', name: 'Claude 3.5 Sonnet', cost: 4, tier: 'high', tierLabel: 'Максимум' },
-      { id: 'claude-std', name: 'Claude 3.5 Haiku', cost: 2, tier: 'medium', tierLabel: 'Стандарт' },
-      { id: 'claude-lite', name: 'Claude 3 Haiku', cost: 1, tier: 'lite', tierLabel: 'Лайт' },
+      { id: 'claude-ultra', name: 'Claude Sonnet', cost: 4 },
+      { id: 'claude-std', name: 'Claude Haiku', cost: 2 },
+      { id: 'claude-lite', name: 'Claude Fast', cost: 1 },
     ],
     aspectRatios: [],
     samplePrompts: [
-      'Напиши сценарий для короткометражного фантастического фильма',
-      'Создай подробный контент-план на 30 дней для бренда'
+      'Тайна заброшенной станции метро, куда поезда приходят лишь в полнолуние',
+      'История старинного антикварного зеркала, отражающего события прошлого'
     ]
   },
   {
     id: 'gemini-pro',
-    name: 'Gemini Pro',
+    name: 'Gemini Sci-Fi',
+    roleTitle: 'Sci-Fi',
     category: 'text',
-    preview: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=600&auto=format&fit=crop&q=80',
-    tags: ['Аналитика', 'Google AI'],
-    desc: 'Быстрый контекстный анализ, структурирование и креативный синтез',
+    preview: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&auto=format&fit=crop&q=80',
+    tags: ['Космос', 'Sci-Fi'],
+    desc: 'Научно-фантастические саги, киберпанк, космические одиссеи и хроники далеких миров',
     cost: 2,
     versions: [
-      { id: 'gemini-ultra', name: 'Gemini 1.5 Pro', cost: 3, tier: 'high', tierLabel: 'Максимум' },
-      { id: 'gemini-std', name: 'Gemini 1.5 Flash', cost: 2, tier: 'medium', tierLabel: 'Стандарт' },
-      { id: 'gemini-lite', name: 'Gemini Flash Lite', cost: 1, tier: 'lite', tierLabel: 'Лайт' },
+      { id: 'gemini-3-flash', name: 'Gemini 3 Flash', cost: 3 },
+      { id: 'gemini-35-flash-lite', name: 'Gemini 3.5 Flash Lite', cost: 2 },
+      { id: 'gemini-25-flash', name: 'Gemini 2.5 Flash', cost: 1 },
     ],
     aspectRatios: [],
     samplePrompts: [
-      'Сделай сравнительный анализ трендов в дизайне 2026',
-      'Составь скрипт прогрева для Telegram-канала'
+      'Хроника экспедиции к мыслящему кристаллическому океану на краю галактики',
+      'История андроида-музыканта в неоновом киберпанк-мегаполисе 2180 года'
     ]
   },
   {
     id: 'llama-3',
-    name: 'Llama 3',
+    name: 'Llama Эпос',
+    roleTitle: 'Эпос',
     category: 'text',
-    preview: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=600&auto=format&fit=crop&q=80',
-    tags: ['Open Source', 'Быстрый'],
-    desc: 'Мощная открытая модель Meta для повседневных задач и диалогов',
+    preview: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
+    tags: ['Приключения', 'Эпос'],
+    desc: 'Захватывающие странствия, поиск сокровищ, древние воины и рыцарские романы',
     cost: 1,
     versions: [
-      { id: 'llama-ultra', name: 'Llama 3.3 70B', cost: 2, tier: 'high', tierLabel: 'Максимум' },
-      { id: 'llama-std', name: 'Llama 3 70B', cost: 1, tier: 'medium', tierLabel: 'Стандарт' },
-      { id: 'llama-lite', name: 'Llama 3 8B', cost: 1, tier: 'lite', tierLabel: 'Лайт' },
+      { id: 'llama-ultra', name: 'Llama 3.3 70B', cost: 2 },
+      { id: 'llama-std', name: 'Llama 3 70B', cost: 1 },
+      { id: 'llama-lite', name: 'Llama 3 8B', cost: 1 },
     ],
     aspectRatios: [],
     samplePrompts: [
-      'Предложи 10 идей для вирусных TikTok роликов',
-      'Напиши вовлекающее приветствие для новых подписчиков'
+      'Опасная экспедиция за затерянным золотым компасом в сердце древних джунглей',
+      'Легенда о рыцаре, давшем клятву защитить последнее Древо Света'
     ]
   },
 ];
+
+export const getModelFallback = (category) => {
+  if (category === 'video') return 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=600&auto=format&fit=crop&q=80';
+  if (category === 'text') return 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80';
+  return 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80';
+};
 
 const Create = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { t, translateDynamic } = useLanguage();
+  const { formatPrice } = useCurrency();
   const { currentUser, balance, setBalance, refreshUser } = useUser();
 
   const [models, setModels] = useState(AI_MODELS_DB);
-  // Видео — на первом месте, открывается сразу при входе!
-  const [activeCategory, setActiveCategory] = useState('video'); // 'video' | 'photo' | 'text' | 'all'
+  // Видео — на первом месте по умолчанию
+  const [activeCategory, setActiveCategory] = useState('video'); // 'video' | 'photo' | 'text'
   const [searchQuery, setSearchQuery] = useState('');
   
-  // Выбранная модель для перехода в полноэкранную Студию (Живой Холст)
+  // Выбранная модель для перехода в Студию
   const [selectedModel, setSelectedModel] = useState(null);
 
   // Параметры генератора
   const [selectedVersion, setSelectedVersion] = useState(null);
   const [userPrompt, setUserPrompt] = useState('');
   const [selectedRatio, setSelectedRatio] = useState('16:9');
-  const [videoDuration, setVideoDuration] = useState(6); // секунды: число 6, 10, 15
-  const [cameraMotion, setCameraMotion] = useState('static'); // 'static' | 'zoom' | 'orbit' | 'pan'
-  const [textMode, setTextMode] = useState('reels'); // 'reels' | 'post' | 'script'
+  const [videoDuration, setVideoDuration] = useState(6);
+  const [storyLength, setStoryLength] = useState('short'); // 'short' | 'long'
+  const [characterName, setCharacterName] = useState('');
   const [referenceImages, setReferenceImages] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationSuccess, setGenerationSuccess] = useState(false);
@@ -376,16 +351,115 @@ const Create = () => {
   const [copiedResult, setCopiedResult] = useState(false);
   const fileInputRef = useRef(null);
 
+  // Ссылки на секции каталога для плавного перехода
+  const videoSectionRef = useRef(null);
+  const photoSectionRef = useRef(null);
+  const textSectionRef = useRef(null);
+
+  const handleScrollToCategory = (cat) => {
+    setActiveCategory(cat);
+    if (cat === 'video') videoSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    else if (cat === 'photo') photoSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    else if (cat === 'text') textSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  // Синхронизация активной вкладки при скролле страницы
+  useEffect(() => {
+    if (selectedModel || searchQuery) return;
+
+    const handleScroll = () => {
+      const scrollPos = window.scrollY + 180;
+      const textTop = textSectionRef.current ? textSectionRef.current.offsetTop : Infinity;
+      const photoTop = photoSectionRef.current ? photoSectionRef.current.offsetTop : Infinity;
+
+      if (scrollPos >= textTop) {
+        setActiveCategory('text');
+      } else if (scrollPos >= photoTop) {
+        setActiveCategory('photo');
+      } else {
+        setActiveCategory('video');
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [selectedModel, searchQuery]);
+
   // Модалка пополнения
   const [showRechargeModal, setShowRechargeModal] = useState(false);
 
-  // Загружаем актуальный список моделей с бэкенда
+  // Загружаем актуальный список моделей с бэкенда и объединяем с метаданными
   useEffect(() => {
     let isMounted = true;
     fetchModels().then((backendModels) => {
-      if (isMounted && backendModels && backendModels.length > 0) {
-        setModels(backendModels);
-      }
+      if (!isMounted || !backendModels || backendModels.length === 0) return;
+
+      setModels(prevModels => {
+        const baseList = prevModels && prevModels.length > 0 ? prevModels : AI_MODELS_DB;
+        const idAliases = {
+          'gpt-tales': 'gpt-4o',
+          'claude-mystic': 'claude-sonnet',
+          'gemini-scifi': 'gemini-pro',
+          'llama-epic': 'llama-3',
+          'gpt-4o': 'gpt-tales',
+          'claude-sonnet': 'claude-mystic',
+          'gemini-pro': 'gemini-scifi',
+          'llama-3': 'llama-epic',
+          'veo3.1': 'veo-3-1',
+          'veo-3.1': 'veo-3-1',
+          'veo-3-1': 'veo3.1',
+        };
+
+        const merged = baseList
+          .map(base => {
+            const serverModel = backendModels.find(bm => 
+              bm.id === base.id || 
+              bm.id === idAliases[base.id] || 
+              (bm.name && base.name && bm.name.toLowerCase().trim() === base.name.toLowerCase().trim())
+            );
+            if (!serverModel) return null;
+            if (serverModel.is_active === false) return null;
+
+            const finalCover = serverModel.preview_url || serverModel.preview || base.preview || getModelFallback(base.category);
+            return {
+              ...base,
+              ...serverModel,
+              id: serverModel.id || base.id,
+              name: serverModel.name || base.name,
+              preview: finalCover,
+              preview_url: finalCover,
+              desc: serverModel.description || serverModel.desc || base.desc,
+              cost: serverModel.cost !== undefined ? serverModel.cost : base.cost,
+              versions: (Array.isArray(serverModel.versions) && serverModel.versions.length > 0) ? serverModel.versions : base.versions,
+              tags: (Array.isArray(serverModel.tags) && serverModel.tags.length > 0) ? serverModel.tags : base.tags,
+              aspectRatios: base.aspectRatios || ['16:9', '9:16', '1:1'],
+              samplePrompts: base.samplePrompts || [],
+            };
+          })
+          .filter(Boolean);
+
+        // Новые модели, добавленные через панель администратора
+        const newFromServer = backendModels
+          .filter(bm => bm.is_active !== false && !baseList.some(b => 
+            b.id === bm.id || 
+            b.id === idAliases[bm.id] || 
+            (b.name && bm.name && b.name.toLowerCase().trim() === bm.name.toLowerCase().trim())
+          ))
+          .map(m => {
+            const fallback = getModelFallback(m.category);
+            const cover = m.preview_url || m.preview || fallback;
+            return {
+              ...m,
+              preview: cover,
+              preview_url: cover,
+              desc: m.description || m.desc || '',
+              aspectRatios: ['16:9', '9:16', '1:1'],
+              samplePrompts: [],
+            };
+          });
+
+        return [...merged, ...newFromServer];
+      });
     });
     return () => { isMounted = false; };
   }, []);
@@ -398,30 +472,40 @@ const Create = () => {
       setSelectedModel(targetModel);
       setSelectedVersion(targetModel.versions?.[0] || null);
       setUserPrompt(location.state.prompt);
+    } else if (location.state?.category) {
+      setActiveCategory(location.state.category);
+      setTimeout(() => {
+        if (location.state.category === 'text') {
+          textSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else if (location.state.category === 'photo') {
+          photoSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+          videoSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 120);
     }
   }, [location.state, models]);
 
-  // Фильтрация списка моделей
+  // Фильтрация списка моделей для поиска
   const filteredModels = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return models;
     return models.filter(model => {
-      const matchesCat = activeCategory === 'all' || model.category === activeCategory;
-      const q = searchQuery.toLowerCase().trim();
-      const matchesSearch = !q || 
-        model.name.toLowerCase().includes(q) || 
+      return model.name.toLowerCase().includes(q) || 
         (model.desc && model.desc.toLowerCase().includes(q)) || 
         (model.tags && model.tags.some(t => t.toLowerCase().includes(q)));
-      return matchesCat && matchesSearch;
     });
-  }, [models, activeCategory, searchQuery]);
+  }, [models, searchQuery]);
 
-  // Открытие Студии Живого Холста для модели
+  // Открытие Студии для модели
   const handleOpenModel = (model) => {
     setSelectedModel(model);
     setSelectedVersion(model.versions?.[0] || null);
     setUserPrompt('');
+    setCharacterName('');
     setSelectedRatio(model.aspectRatios?.[0] || '16:9');
     setVideoDuration(model.defaultDuration || 6);
-    setCameraMotion('static');
+    setStoryLength('short');
     setReferenceImages([]);
     setGenerationSuccess(false);
     setGeneratedResult(null);
@@ -479,6 +563,7 @@ const Create = () => {
 
     try {
       const isVideo = selectedModel.category === 'video';
+      const isText = selectedModel.category === 'text';
       const durationToSend = isVideo 
         ? (selectedModel.allowDurationChoice ? videoDuration : (selectedModel.defaultDuration || 6))
         : undefined;
@@ -489,10 +574,10 @@ const Create = () => {
         version_id: selectedVersion?.id,
         prompt: userPrompt.trim(),
         params: {
-          aspect_ratio: selectedRatio,
+          aspect_ratio: !isText ? selectedRatio : undefined,
           duration: durationToSend,
-          camera_motion: isVideo ? cameraMotion : undefined,
-          text_mode: selectedModel.category === 'text' ? textMode : undefined,
+          story_length: isText ? storyLength : undefined,
+          character_name: isText ? (characterName.trim() || undefined) : undefined,
           reference_images: referenceImages,
         },
       });
@@ -532,7 +617,7 @@ const Create = () => {
             prompt: userPrompt.trim(),
             taskId: res.task_id || null,
             mediaUrl: res.result?.url || null,
-            text: res.result?.text || (selectedModel.category === 'video' ? '🎬 Генерирую видео через нейросеть...' : '🎨 Создаю изображение...'),
+            text: res.result?.text || (selectedModel.category === 'video' ? 'Генерирую видео через нейросеть...' : (selectedModel.category === 'text' ? 'Сочиняю историю...' : 'Создаю изображение...')),
             status: res.result?.text ? 'completed' : 'pending',
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           }
@@ -572,390 +657,142 @@ const Create = () => {
 
     return (
       <div className="studio-page-wrapper">
-        {/* 1. Верхняя панель навигации студии */}
         <header className="studio-top-bar">
-          <button 
-            className="studio-back-btn" 
-            onClick={() => setSelectedModel(null)}
-            aria-label="Назад к каталогу"
-          >
-            <ArrowLeft size={18} />
-          </button>
-
-          <div className="studio-title-badge">
-            <span className="studio-model-name">{selectedVersion ? selectedVersion.name : selectedModel.name}</span>
-          </div>
-
+          <button className="studio-back-btn" onClick={() => setSelectedModel(null)}><ArrowLeft size={18} /></button>
+          <div className="studio-title-badge"><span className="studio-model-name">{selectedVersion ? selectedVersion.name : selectedModel.name}</span></div>
           <div className="balance-capsule" onClick={() => setShowRechargeModal(true)}>
-            <div className="balance-info">
-              <div className="credit-token-icon">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 2L2 12L12 22L22 12L12 2Z" stroke="#e5b95c" strokeWidth="2.4" strokeLinejoin="round" fill="rgba(229, 185, 92, 0.25)" />
-                  <path d="M12 6L6 12L12 18L18 12L12 6Z" stroke="#e5b95c" strokeWidth="1.5" />
-                </svg>
-              </div>
-              <span className="balance-amount">{balance}</span>
-            </div>
-            <button className="balance-add-btn">
-              <Plus size={12} strokeWidth={3} />
-            </button>
+            <div className="balance-info"><span className="balance-amount">{balance}</span></div>
+            <button className="balance-add-btn"><Plus size={12} strokeWidth={3} /></button>
           </div>
         </header>
 
-        {/* 2. ИНТЕРАКТИВНЫЙ ЖИВОЙ ХОЛСТ */}
-        <div className="interactive-canvas-stage">
-          {generatedResult ? (
-            <div className="studio-result-container">
-              {generatedResult.type === 'text' ? (
-                <div className="studio-text-result-box">
-                  <div className="text-result-header">
-                    <span className="text-result-model">
-                      <Sparkles size={14} color="var(--color-accent)" />
-                      {generatedResult.model} • {generatedResult.version}
-                    </span>
-                    <button 
-                      className="text-copy-action-btn"
-                      onClick={() => {
-                        navigator.clipboard.writeText(generatedResult.text);
-                        setCopiedResult(true);
-                        setTimeout(() => setCopiedResult(false), 2000);
-                        showToast('Текст скопирован в буфер!', 'success');
-                      }}
-                    >
-                      {copiedResult ? <Check size={14} color="#4ade80" /> : <Copy size={14} />}
-                      <span>{copiedResult ? 'Скопировано' : 'Копировать'}</span>
-                    </button>
+        {isText ? (
+          <div className="story-studio-hero">
+            <div className="story-hero-badge"><BookOpen size={13} color="rgba(255, 255, 255, 0.85)" /><span>Литературный ИИ • {selectedModel.roleTitle || 'Мастер историй'}</span></div>
+            <h2 className="story-hero-title">{selectedModel.name}</h2>
+            <p className="story-hero-desc">{selectedModel.desc}</p>
+          </div>
+        ) : (
+          <div className="interactive-canvas-stage">
+            {generatedResult ? (
+              <div className="studio-result-container">
+                {generatedResult.type === 'video' ? (
+                  <div className="studio-media-result-box">
+                    <video src={generatedResult.url} controls autoPlay loop playsInline className="studio-real-media" />
+                    <div className="media-result-actions">
+                      <a href={generatedResult.url} target="_blank" rel="noreferrer" download className="result-action-pill"><Download size={14} /><span>Скачать видео</span></a>
+                      <button className="result-action-pill" onClick={() => setGeneratedResult(null)}><RotateCcw size={14} /><span>Новый ролик</span></button>
+                    </div>
                   </div>
-                  <div className="text-result-content">
-                    {generatedResult.text}
-                  </div>
-                  <div className="text-result-footer">
-                    <button 
-                      className="result-retry-btn"
-                      onClick={() => setGeneratedResult(null)}
-                    >
-                      <RotateCcw size={13} />
-                      <span>Создать ещё</span>
-                    </button>
-                  </div>
-                </div>
-              ) : generatedResult.type === 'video' ? (
-                <div className="studio-media-result-box">
-                  <video 
-                    src={generatedResult.url} 
-                    controls 
-                    autoPlay 
-                    loop 
-                    playsInline 
-                    className="studio-real-media"
-                  />
-                  <div className="media-result-actions">
-                    <a 
-                      href={generatedResult.url} 
-                      target="_blank" 
-                      rel="noreferrer" 
-                      download 
-                      className="result-action-pill"
-                    >
-                      <Download size={14} />
-                      <span>Скачать видео</span>
-                    </a>
-                    <button 
-                      className="result-action-pill"
-                      onClick={() => setGeneratedResult(null)}
-                    >
-                      <RotateCcw size={14} />
-                      <span>Новый ролик</span>
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="studio-media-result-box">
-                  <img 
-                    src={generatedResult.url} 
-                    alt="Результат генерации" 
-                    className="studio-real-media"
-                  />
-                  <div className="media-result-actions">
-                    <a 
-                      href={generatedResult.url} 
-                      target="_blank" 
-                      rel="noreferrer" 
-                      download 
-                      className="result-action-pill"
-                    >
-                      <Download size={14} />
-                      <span>Скачать фото</span>
-                    </a>
-                    <button 
-                      className="result-action-pill"
-                      onClick={() => setGeneratedResult(null)}
-                    >
-                      <RotateCcw size={14} />
-                      <span>Новое фото</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : isPolling ? (
-            <div className="studio-polling-box">
-              <div className="spinner-large" />
-              <p className="polling-main-text">{pollingStatusText}</p>
-              <span className="polling-sub-text">Нейросеть рендерит ваш запрос в высоком качестве</span>
-            </div>
-          ) : (
-            <div 
-              className={`live-frame-box ratio-${selectedRatio.replace(':', '-')}`}
-            >
-              <div className="canvas-grid-overlay" />
-              
-              {/* Верхний бейдж формата */}
-              <div className="canvas-top-tag">
-                {isVideo ? <Film size={12} color="#e5b95c" /> : isText ? <FileText size={12} color="#e5b95c" /> : <Camera size={12} color="#e5b95c" />}
-                <span>Живой холст: {isText ? 'Текст' : selectedRatio}</span>
-              </div>
-
-              {/* Фирменный логотип модели */}
-              <div className="canvas-center-brand">
-                <div className="canvas-brand-icon">
-                  {isVideo ? <Play size={24} fill="currentColor" color="#e5b95c" /> : isText ? <FileText size={24} color="#e5b95c" /> : <Camera size={24} color="#e5b95c" />}
-                </div>
-                <h4 className="canvas-brand-name">{selectedVersion ? selectedVersion.name : selectedModel.name}</h4>
-                <p className="canvas-brand-desc">{selectedModel.desc}</p>
-              </div>
-
-              {/* Нижний бейдж параметров */}
-              <div className="canvas-bottom-tag">
-                {isVideo ? (
-                  <span>
-                    {cameraMotion === 'static' 
-                      ? 'Статичная камера' 
-                      : cameraMotion === 'zoom' 
-                      ? 'Приближение (Zoom)' 
-                      : cameraMotion === 'orbit' 
-                      ? 'Круговой облет 360°' 
-                      : 'Панорама'} • {selectedModel.allowDurationChoice ? `${videoDuration} сек` : '6 сек'}
-                  </span>
                 ) : (
-                  <span>{selectedVersion ? selectedVersion.name : selectedModel.name} • Студия</span>
+                  <div className="studio-media-result-box">
+                    <img src={generatedResult.url} alt="Результат генерации" className="studio-real-media" />
+                    <div className="media-result-actions">
+                      <a href={generatedResult.url} target="_blank" rel="noreferrer" download className="result-action-pill"><Download size={14} /><span>Скачать фото</span></a>
+                      <button className="result-action-pill" onClick={() => setGeneratedResult(null)}><RotateCcw size={14} /><span>Новое фото</span></button>
+                    </div>
+                  </div>
                 )}
               </div>
-            </div>
-          )}
-        </div>
+            ) : isPolling ? (
+              <div className="studio-polling-box">
+                <div className="spinner-large" />
+                <p className="polling-main-text">{pollingStatusText}</p>
+                <span className="polling-sub-text">Нейросеть рендерит ваш запрос в высоком качестве</span>
+              </div>
+            ) : (
+              <div className={`live-frame-box ratio-${selectedRatio.replace(':', '-')}`}>
+                <div className="canvas-grid-overlay" />
+                <div className="canvas-top-tag">{isVideo ? <Film size={12} color="rgba(255, 255, 255, 0.85)" /> : <Camera size={12} color="rgba(255, 255, 255, 0.85)" />}<span>{selectedRatio}</span></div>
+                <div className="canvas-center-brand">
+                  <div className="canvas-brand-icon">{isVideo ? <Play size={20} fill="currentColor" color="rgba(255, 255, 255, 0.9)" /> : <Camera size={20} color="rgba(255, 255, 255, 0.9)" />}</div>
+                  <h4 className="canvas-brand-name">{selectedVersion ? selectedVersion.name : selectedModel.name}</h4>
+                </div>
+                <div className="canvas-bottom-tag">{isVideo ? (<span>{selectedModel.allowDurationChoice ? `${videoDuration} сек` : '6 сек'} • Высокое качество</span>) : (<span>Студийное качество • 4K</span>)}</div>
+              </div>
+            )}
+          </div>
+        )}
 
-        {/* 3. УРОВЕНЬ МОЩНОСТИ НЕЙРОСЕТИ (ДОСТУПЕН ДЛЯ ВСЕХ МОДЕЛЕЙ: МАКС / СТАНДАРТ / ЛАЙТ) */}
         {selectedModel.versions && selectedModel.versions.length > 0 && (
           <div className="studio-section">
             <div className="section-label-row">
-              <label className="studio-section-label">Уровень модели</label>
-              <span className="char-counter" style={{ color: 'var(--color-accent)', fontWeight: 600 }}>
-                {selectedVersion?.tierLabel || 'Выбор уровня'}
-              </span>
+              <label className="studio-section-label">Версия модели</label>
+              {selectedVersion && (
+                <span className="char-counter">{selectedVersion.name}</span>
+              )}
             </div>
             <div className="tier-pills-row" style={{ gridTemplateColumns: `repeat(${selectedModel.versions.length}, 1fr)` }}>
-              {selectedModel.versions.map((ver) => {
-                const isHigh = ver.tier === 'high' || ver.name.toLowerCase().includes('ultra') || ver.name.toLowerCase().includes('3.0') || ver.name.toLowerCase().includes('4.0') || ver.name.toLowerCase().includes('pro');
-                const isLite = ver.tier === 'lite' || ver.name.toLowerCase().includes('lite') || ver.name.toLowerCase().includes('fast') || ver.name.toLowerCase().includes('mini') || ver.name.toLowerCase().includes('schnell');
-                const tierIcon = isHigh ? '🔥' : isLite ? '⚡' : '✨';
-                const tierText = ver.tierLabel || (isHigh ? 'Максимум' : isLite ? 'Лайт' : 'Стандарт');
-
-                return (
-                  <button 
-                    key={ver.id || ver.name}
-                    className={`tier-pill ${selectedVersion?.id === ver.id ? 'active' : ''}`}
-                    onClick={() => setSelectedVersion(ver)}
-                  >
-                    <span className="tier-badge" style={{
-                      fontSize: '0.62rem',
-                      fontWeight: 800,
-                      padding: '2px 5px',
-                      borderRadius: '4px',
-                      marginBottom: '2px',
-                      background: isHigh ? 'rgba(239, 68, 68, 0.2)' : isLite ? 'rgba(34, 197, 94, 0.2)' : 'rgba(234, 179, 8, 0.2)',
-                      color: isHigh ? '#f87171' : isLite ? '#4ade80' : '#facc15'
-                    }}>
-                      {tierIcon} {tierText}
-                    </span>
-                    <span className="tier-name">{ver.name}</span>
-                    <span className="tier-cost">{ver.cost} CR</span>
-                  </button>
-                );
-              })}
+              {selectedModel.versions.map((ver) => (
+                <button 
+                  key={ver.id || ver.name} 
+                  className={`tier-pill ${selectedVersion?.id === ver.id ? 'active' : ''}`} 
+                  onClick={() => setSelectedVersion(ver)}
+                >
+                  <span className="tier-name">{ver.name}</span>
+                  <span className="tier-cost">{ver.cost} CR</span>
+                </button>
+              ))}
             </div>
           </div>
         )}
 
-        {/* 4. НАСТРОЙКИ В ЗАВИСИМОСТИ ОТ ТИПА НЕЙРОСЕТИ */}
-        {/* А. Для ВИДЕО-нейросетей */}
         {isVideo && (
-          <>
-            {/* Длительность видео: для Seedance выбор 6 / 10 / 15 сек, для остальных — строго 6 сек */}
-            <div className="studio-section">
-              <div className="section-label-row">
-                <label className="studio-section-label">
-                  {selectedModel.allowDurationChoice ? 'Длительность видео' : 'Длительность'}
-                </label>
-                {selectedModel.allowDurationChoice && (
-                  <span className="char-counter" style={{ color: 'var(--color-accent)' }}>
-                    Выбор доступен
-                  </span>
-                )}
-              </div>
-              {selectedModel.allowDurationChoice ? (
-                <div className="tier-pills-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-                  {(selectedModel.durationOptions || [6, 10, 15]).map((dur) => (
-                    <button
-                      key={dur}
-                      className={`tier-pill ${videoDuration === dur ? 'active' : ''}`}
-                      onClick={() => setVideoDuration(dur)}
-                    >
-                      <span className="tier-name">{dur} сек</span>
-                      <span className="tier-cost">
-                        {dur === 6 ? 'Базовое' : dur === 10 ? 'Оптимум' : 'Максимум'}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="fixed-duration-pill">
-                  <Clock size={16} color="#e5b95c" />
-                  <span className="duration-fixed-text">6 секунд</span>
-                  <span className="duration-fixed-note">Стандарт для {selectedModel.name}</span>
-                </div>
-              )}
+          <div className="studio-section">
+            <div className="section-label-row">
+              <label className="studio-section-label">{selectedModel.allowDurationChoice ? 'Длительность видео' : 'Длительность'}</label>
             </div>
-
-            {/* Движение камеры */}
-            <div className="studio-section">
-              <label className="studio-section-label">Движение камеры</label>
-              <div className="tier-pills-row" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
-                <button 
-                  className={`tier-pill ${cameraMotion === 'static' ? 'active' : ''}`}
-                  onClick={() => setCameraMotion('static')}
-                >
-                  <span className="tier-name">Без движения</span>
-                  <span className="tier-cost">Статичная камера</span>
-                </button>
-                <button 
-                  className={`tier-pill ${cameraMotion === 'zoom' ? 'active' : ''}`}
-                  onClick={() => setCameraMotion('zoom')}
-                >
-                  <span className="tier-name">Приближение</span>
-                  <span className="tier-cost">Zoom In</span>
-                </button>
-                <button 
-                  className={`tier-pill ${cameraMotion === 'orbit' ? 'active' : ''}`}
-                  onClick={() => setCameraMotion('orbit')}
-                >
-                  <span className="tier-name">Круговой облет</span>
-                  <span className="tier-cost">Вращение 360°</span>
-                </button>
-                <button 
-                  className={`tier-pill ${cameraMotion === 'pan' ? 'active' : ''}`}
-                  onClick={() => setCameraMotion('pan')}
-                >
-                  <span className="tier-name">Панорама</span>
-                  <span className="tier-cost">Сдвиг вбок</span>
-                </button>
+            {selectedModel.allowDurationChoice ? (
+              <div className="tier-pills-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                {(selectedModel.durationOptions || [6, 10, 15]).map((dur) => (
+                  <button key={dur} className={`tier-pill ${videoDuration === dur ? 'active' : ''}`} onClick={() => setVideoDuration(dur)}>
+                    <span className="tier-name">{dur} сек</span>
+                    <span className="tier-cost">{dur === 6 ? 'Базовое' : dur === 10 ? 'Оптимум' : 'Максимум'}</span>
+                  </button>
+                ))}
               </div>
-            </div>
-
-            {/* Пропорции видео */}
+            ) : (
+              <div className="fixed-duration-pill"><Clock size={16} color="rgba(255, 255, 255, 0.7)" /><span className="duration-fixed-text">6 секунд</span><span className="duration-fixed-note">Стандарт для {selectedModel.name}</span></div>
+            )}
             <div className="studio-section">
               <label className="studio-section-label">Пропорции видео</label>
-              <div className="tier-pills-row">
-                <button 
-                  className={`tier-pill ${selectedRatio === '9:16' ? 'active' : ''}`}
-                  onClick={() => setSelectedRatio('9:16')}
-                >
-                  <span className="tier-name">9:16</span>
-                  <span className="tier-cost">Reels / Shorts</span>
-                </button>
-                <button 
-                  className={`tier-pill ${selectedRatio === '16:9' ? 'active' : ''}`}
-                  onClick={() => setSelectedRatio('16:9')}
-                >
-                  <span className="tier-name">16:9</span>
-                  <span className="tier-cost">Горизонт</span>
-                </button>
-                <button 
-                  className={`tier-pill ${selectedRatio === '1:1' ? 'active' : ''}`}
-                  onClick={() => setSelectedRatio('1:1')}
-                >
-                  <span className="tier-name">1:1</span>
-                  <span className="tier-cost">Квадрат</span>
-                </button>
+              <div className="tier-pills-row" style={{ gridTemplateColumns: `repeat(${selectedModel.aspectRatios?.length || 2}, 1fr)` }}>
+                {(selectedModel.aspectRatios || ['16:9', '9:16']).map((ratio) => (
+                  <button key={ratio} className={`tier-pill ${selectedRatio === ratio ? 'active' : ''}`} onClick={() => setSelectedRatio(ratio)}>
+                    <span className="tier-name">{ratio}</span>
+                    <span className="tier-cost">{ratio === '9:16' ? 'Reels / Shorts' : ratio === '16:9' ? 'Горизонт' : 'Квадрат'}</span>
+                  </button>
+                ))}
               </div>
             </div>
-          </>
+          </div>
         )}
 
-        {/* Б. Для ФОТО-нейросетей */}
         {!isVideo && !isText && (
           <div className="studio-section">
             <label className="studio-section-label">Пропорции кадра</label>
-            <div className="tier-pills-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-              <button 
-                className={`tier-pill ${selectedRatio === '9:16' ? 'active' : ''}`}
-                onClick={() => setSelectedRatio('9:16')}
-              >
-                <span className="tier-name">9:16</span>
-                <span className="tier-cost">Reels</span>
-              </button>
-              <button 
-                className={`tier-pill ${selectedRatio === '1:1' ? 'active' : ''}`}
-                onClick={() => setSelectedRatio('1:1')}
-              >
-                <span className="tier-name">1:1</span>
-                <span className="tier-cost">Аватар</span>
-              </button>
-              <button 
-                className={`tier-pill ${selectedRatio === '16:9' ? 'active' : ''}`}
-                onClick={() => setSelectedRatio('16:9')}
-              >
-                <span className="tier-name">16:9</span>
-                <span className="tier-cost">Кино</span>
-              </button>
-              <button 
-                className={`tier-pill ${selectedRatio === '4:5' ? 'active' : ''}`}
-                onClick={() => setSelectedRatio('4:5')}
-              >
-                <span className="tier-name">4:5</span>
-                <span className="tier-cost">Пост</span>
-              </button>
+            <div className="tier-pills-row" style={{ gridTemplateColumns: `repeat(${selectedModel.aspectRatios?.length || 4}, 1fr)` }}>
+              {(selectedModel.aspectRatios || ['9:16', '1:1', '16:9', '4:5']).map((ratio) => (
+                <button key={ratio} className={`tier-pill ${selectedRatio === ratio ? 'active' : ''}`} onClick={() => setSelectedRatio(ratio)}>
+                  <span className="tier-name">{ratio}</span>
+                  <span className="tier-cost">{ratio === '9:16' ? 'Reels' : ratio === '1:1' ? 'Аватар' : ratio === '16:9' ? 'Кино' : 'Пост'}</span>
+                </button>
+              ))}
             </div>
           </div>
         )}
 
-        {/* Референсы или лица (до 10 фото) — для Фото и Видео нейросетей */}
         {!isText && (
           <div className="studio-section">
             <div className="section-label-row">
               <label className="studio-section-label">Референс или лицо (до 10 фото)</label>
-              {referenceImages.length > 0 && (
-                <span className="char-counter">{referenceImages.length} из 10 фото</span>
-              )}
+              {referenceImages.length > 0 && (<span className="char-counter">{referenceImages.length} из 10 фото</span>)}
             </div>
-            <input 
-              ref={fileInputRef}
-              type="file" 
-              multiple
-              accept="image/*"
-              style={{ display: 'none' }}
-              onChange={handleUploadImages}
-            />
-            
+            <input ref={fileInputRef} type="file" multiple accept="image/*" style={{ display: 'none' }} onChange={handleUploadImages} />
             {referenceImages.length === 0 ? (
               <div className="upload-ref-dashed-box" onClick={() => fileInputRef.current?.click()}>
-                <div className="upload-icon-circle">
-                  <Camera size={18} color="#ffffff" />
-                </div>
-                <div className="upload-box-text">
-                  <span className="upload-main-title">Прикрепить фото или селфи</span>
-                  <span className="upload-limit-badge">Загружайте до 10 фото</span>
-                </div>
+                <div className="upload-icon-circle"><Camera size={18} color="#ffffff" /></div>
+                <div className="upload-box-text"><span className="upload-main-title">Прикрепить фото или селфи</span><span className="upload-limit-badge">Загружайте до 10 фото</span></div>
               </div>
             ) : (
               <div className="multi-ref-container">
@@ -964,68 +801,63 @@ const Create = () => {
                     <div key={idx} className="multi-ref-thumb-wrap">
                       <img src={imgUrl} alt={`Ref ${idx + 1}`} className="multi-ref-thumb" />
                       <span className="multi-ref-index">{idx + 1}</span>
-                      <button 
-                        type="button"
-                        className="multi-ref-remove-btn" 
-                        onClick={() => handleRemoveImage(idx)}
-                        aria-label="Удалить фото"
-                      >
-                        <X size={10} strokeWidth={3} />
-                      </button>
+                      <button type="button" className="multi-ref-remove-btn" onClick={() => handleRemoveImage(idx)}><X size={10} strokeWidth={3} /></button>
                     </div>
                   ))}
-
-                  {referenceImages.length < 10 && (
-                    <button 
-                      type="button"
-                      className="multi-ref-add-slot" 
-                      onClick={() => fileInputRef.current?.click()}
-                      title="Добавить еще фото"
-                    >
-                      <Plus size={18} />
-                      <span>Еще фото</span>
-                    </button>
-                  )}
+                  {referenceImages.length < 10 && (<button type="button" className="multi-ref-add-slot" onClick={() => fileInputRef.current?.click()}><Plus size={18} /><span>Еще фото</span></button>)}
                 </div>
               </div>
             )}
           </div>
         )}
 
-        {/* В. Для ТЕКСТОВЫХ нейросетей */}
+        {/* В. Для ТЕКСТОВЫХ нейросетей (ИИ-Сказители) */}
         {isText && (
-          <div className="studio-section">
-            <label className="studio-section-label">Формат публикации</label>
-            <div className="tier-pills-row">
-              <button 
-                className={`tier-pill ${textMode === 'reels' ? 'active' : ''}`}
-                onClick={() => setTextMode('reels')}
-              >
-                <span className="tier-name">Reels</span>
-                <span className="tier-cost">Сценарий</span>
-              </button>
-              <button 
-                className={`tier-pill ${textMode === 'post' ? 'active' : ''}`}
-                onClick={() => setTextMode('post')}
-              >
-                <span className="tier-name">Пост</span>
-                <span className="tier-cost">Instagram/TG</span>
-              </button>
-              <button 
-                className={`tier-pill ${textMode === 'script' ? 'active' : ''}`}
-                onClick={() => setTextMode('script')}
-              >
-                <span className="tier-name">Статья</span>
-                <span className="tier-cost">Лонгрид</span>
-              </button>
+          <>
+            <div className="studio-section">
+              <label className="studio-section-label">Объем истории</label>
+              <div className="tier-pills-row" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+                <button 
+                  className={`tier-pill ${storyLength === 'short' ? 'active' : ''}`}
+                  onClick={() => setStoryLength('short')}
+                >
+                  <span className="tier-name">Короткая история</span>
+                  <span className="tier-cost">1–2 минуты чтения</span>
+                </button>
+                <button 
+                  className={`tier-pill ${storyLength === 'long' ? 'active' : ''}`}
+                  onClick={() => setStoryLength('long')}
+                >
+                  <span className="tier-name">Развернутая глава</span>
+                  <span className="tier-cost">Полная история</span>
+                </button>
+              </div>
             </div>
-          </div>
+
+            <div className="studio-section">
+              <div className="section-label-row">
+                <label className="studio-section-label">Имя героя или персонажей</label>
+                <span className="char-counter">необязательно</span>
+              </div>
+              <div className="pro-input-container">
+                <input 
+                  type="text" 
+                  className="pro-single-input" 
+                  placeholder="Например: Артур, маленькая Мира, детектив Рэй..." 
+                  value={characterName} 
+                  onChange={(e) => setCharacterName(e.target.value)} 
+                />
+              </div>
+            </div>
+          </>
         )}
 
         {/* 5. ПОЛЕ ОПИСАНИЯ СЮЖЕТА / ИДЕИ */}
         <div className="studio-section">
           <div className="section-label-row">
-            <label className="studio-section-label">{isVideo ? 'Сюжет сцены' : 'Описание шедевра'}</label>
+            <label className="studio-section-label">
+              {isVideo ? 'Сюжет сцены' : isText ? 'Завязка сюжета или идея' : 'Описание шедевра'}
+            </label>
             <span className="char-counter">{userPrompt.length} знаков</span>
           </div>
 
@@ -1034,14 +866,14 @@ const Create = () => {
               className="pro-textarea"
               placeholder={
                 isVideo 
-                  ? 'Опишите действие, движение камеры и персонажей...' 
+                  ? 'Опишите действие, динамику и персонажей...' 
                   : isText
-                  ? 'Опишите тему статьи, целевую аудиторию и ключевой посыл...'
+                  ? 'Опишите главных героев, место действия или начальное событие...'
                   : 'Опишите, что хотите увидеть на картине...'
               }
               value={userPrompt}
               onChange={(e) => setUserPrompt(e.target.value)}
-              rows={3}
+              rows={isText ? 4 : 3}
             />
           </div>
         </div>
@@ -1056,18 +888,22 @@ const Create = () => {
             {isGenerating ? (
               <>
                 <div className="spinner-mini" />
-                <span>Создание шедевра...</span>
+                <span>{isText ? 'Сочиняем историю...' : 'Создание шедевра...'}</span>
               </>
             ) : generationSuccess ? (
               <>
                 <Check size={18} color="#4ade80" />
-                <span style={{ color: '#4ade80' }}>Шедевр готов! Сохранен в профиль</span>
+                <span style={{ color: '#4ade80' }}>Готово! Сохранено в чаты</span>
               </>
             ) : (
               <>
-                {isVideo ? <Play size={16} fill="currentColor" /> : <Sparkles size={16} />}
+                {isVideo ? <Play size={16} fill="currentColor" /> : isText ? <BookOpen size={16} /> : <Camera size={16} />}
                 <span>
-                  {isVideo ? `Сгенерировать видео (${currentCost} CR)` : isText ? `Создать текст (${currentCost} CR)` : `Сгенерировать шедевр (${currentCost} CR)`}
+                  {isVideo 
+                    ? `Сгенерировать видео (${currentCost} CR)` 
+                    : isText 
+                    ? `Написать историю (${currentCost} CR)` 
+                    : `Создать изображение (${currentCost} CR)`}
                 </span>
               </>
             )}
@@ -1094,7 +930,7 @@ const Create = () => {
                     <span className="pkg-amount">100 CR</span>
                     <span className="pkg-desc">{t('pkgStoriesPhotos')}</span>
                   </div>
-                  <button className="pkg-price-btn">199 ₽</button>
+                  <button className="pkg-price-btn">{formatPrice(1490)}</button>
                 </div>
 
                 <div className="credit-pkg-card popular" onClick={() => { setBalance(balance + 350); setShowRechargeModal(false); showToast(t('tokensCredited', { amount: 350 }), 'token'); }}>
@@ -1103,7 +939,7 @@ const Create = () => {
                     <span className="pkg-amount">350 CR</span>
                     <span className="pkg-desc">{t('pkgOptimalSet')}</span>
                   </div>
-                  <button className="pkg-price-btn accent">490 ₽</button>
+                  <button className="pkg-price-btn accent">{formatPrice(3990)}</button>
                 </div>
 
                 <div className="credit-pkg-card" onClick={() => { setBalance(balance + 1250); setShowRechargeModal(false); showToast(t('tokensCredited', { amount: 1250 }), 'token'); }}>
@@ -1112,7 +948,7 @@ const Create = () => {
                     <span className="pkg-amount">1250 CR</span>
                     <span className="pkg-desc">{t('pkgMaxVideo')}</span>
                   </div>
-                  <button className="pkg-price-btn">1 290 ₽</button>
+                  <button className="pkg-price-btn">{formatPrice(9990)}</button>
                 </div>
               </div>
 
@@ -1183,47 +1019,39 @@ const Create = () => {
           )}
         </div>
 
-        {/* Вкладки категорий: Видео (1) -> Фото (2) -> Все (3) -> Текст (на последнем месте) */}
+        {/* Вкладки категорий: Видео (1) -> Фото (2) -> Истории (3) */}
         <div className="create-category-tabs">
           <button 
             className={`create-tab-btn ${activeCategory === 'video' ? 'active' : ''}`}
-            onClick={() => setActiveCategory('video')}
+            onClick={() => handleScrollToCategory('video')}
           >
             <Play size={12} fill="currentColor" />
-            <span>{t('video')}</span>
+            <span>Видео</span>
           </button>
 
           <button 
             className={`create-tab-btn ${activeCategory === 'photo' ? 'active' : ''}`}
-            onClick={() => setActiveCategory('photo')}
+            onClick={() => handleScrollToCategory('photo')}
           >
             <Camera size={13} />
-            <span>{t('photo')}</span>
-          </button>
-
-          <button 
-            className={`create-tab-btn ${activeCategory === 'all' ? 'active' : ''}`}
-            onClick={() => setActiveCategory('all')}
-          >
-            <Sparkles size={13} />
-            <span>{t('all')}</span>
+            <span>Фото</span>
           </button>
 
           <button 
             className={`create-tab-btn ${activeCategory === 'text' ? 'active' : ''}`}
-            onClick={() => setActiveCategory('text')}
+            onClick={() => handleScrollToCategory('text')}
           >
-            <FileText size={13} />
-            <span>{t('text')}</span>
+            <BookOpen size={13} />
+            <span>Истории</span>
           </button>
         </div>
       </div>
 
-      {/* Список моделей: разделенный по секциям Видео -> Фото -> Текст */}
-      {activeCategory === 'all' && !searchQuery ? (
+      {/* Список моделей: единый непрерывный скролл Видео -> Фото -> Истории */}
+      {!searchQuery ? (
         <div className="all-models-grouped-wrap">
           {/* Секция 1: Видео модели */}
-          <div className="models-category-group">
+          <div ref={videoSectionRef} className="models-category-group" id="section-video">
             <div className="category-group-header">
               <Play size={15} fill="currentColor" color="var(--color-accent)" />
               <h3>Генерация видео</h3>
@@ -1236,7 +1064,17 @@ const Create = () => {
                   className="create-model-card"
                   onClick={() => handleOpenModel(model)}
                 >
-                  <div className="model-thumb-box" style={{ backgroundImage: `url(${model.preview})` }}>
+                  <div className="model-thumb-box">
+                    <img 
+                      src={model.preview_url || model.preview || getModelFallback('video')} 
+                      alt={model.name}
+                      className="model-thumb-img"
+                      loading="lazy"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = getModelFallback('video');
+                      }}
+                    />
                     <span className="model-cat-icon">
                       <Play size={10} fill="#ffffff" />
                     </span>
@@ -1244,17 +1082,7 @@ const Create = () => {
                   <div className="model-info-col">
                     <div className="model-title-row">
                       <span className="model-name">{model.name}</span>
-                      <span style={{
-                        fontSize: '0.62rem',
-                        fontWeight: 700,
-                        color: 'var(--color-accent)',
-                        background: 'rgba(229, 185, 92, 0.12)',
-                        padding: '2px 6px',
-                        borderRadius: '4px',
-                        marginLeft: '6px'
-                      }}>
-                        3 уровня
-                      </span>
+                      <span className="model-versions-count-badge">3 версии</span>
                     </div>
                     <div className="model-tags-row">
                       {model.tags && model.tags.map((tag, i) => (
@@ -1275,7 +1103,7 @@ const Create = () => {
           </div>
 
           {/* Секция 2: Фото модели и Face Swap */}
-          <div className="models-category-group">
+          <div ref={photoSectionRef} className="models-category-group" id="section-photo">
             <div className="category-group-header">
               <Camera size={15} color="var(--color-accent)" />
               <h3>Генерация фото & Face Swap</h3>
@@ -1288,7 +1116,17 @@ const Create = () => {
                   className="create-model-card"
                   onClick={() => handleOpenModel(model)}
                 >
-                  <div className="model-thumb-box" style={{ backgroundImage: `url(${model.preview})` }}>
+                  <div className="model-thumb-box">
+                    <img 
+                      src={model.preview_url || model.preview || getModelFallback('photo')} 
+                      alt={model.name}
+                      className="model-thumb-img"
+                      loading="lazy"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = getModelFallback('photo');
+                      }}
+                    />
                     <span className="model-cat-icon">
                       <Camera size={10} />
                     </span>
@@ -1296,17 +1134,7 @@ const Create = () => {
                   <div className="model-info-col">
                     <div className="model-title-row">
                       <span className="model-name">{model.name}</span>
-                      <span style={{
-                        fontSize: '0.62rem',
-                        fontWeight: 700,
-                        color: 'var(--color-accent)',
-                        background: 'rgba(229, 185, 92, 0.12)',
-                        padding: '2px 6px',
-                        borderRadius: '4px',
-                        marginLeft: '6px'
-                      }}>
-                        3 уровня
-                      </span>
+                      <span className="model-versions-count-badge">3 версии</span>
                     </div>
                     <div className="model-tags-row">
                       {model.tags && model.tags.map((tag, i) => (
@@ -1326,11 +1154,11 @@ const Create = () => {
             </div>
           </div>
 
-          {/* Секция 3: Текстовые модели (последнее место) */}
-          <div className="models-category-group">
+          {/* Секция 3: Истории и Сказки */}
+          <div ref={textSectionRef} className="models-category-group" id="section-text">
             <div className="category-group-header">
-              <FileText size={15} color="var(--color-accent)" />
-              <h3>Текстовые ИИ</h3>
+              <BookOpen size={15} color="var(--color-accent)" />
+              <h3>Истории и сказки</h3>
               <span className="category-group-count">{models.filter(m => m.category === 'text').length}</span>
             </div>
             <div className="create-models-list">
@@ -1340,25 +1168,25 @@ const Create = () => {
                   className="create-model-card"
                   onClick={() => handleOpenModel(model)}
                 >
-                  <div className="model-thumb-box" style={{ backgroundImage: `url(${model.preview})` }}>
+                  <div className="model-thumb-box">
+                    <img 
+                      src={model.preview_url || model.preview || getModelFallback('text')} 
+                      alt={model.name}
+                      className="model-thumb-img"
+                      loading="lazy"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = getModelFallback('text');
+                      }}
+                    />
                     <span className="model-cat-icon">
-                      <FileText size={10} />
+                      <BookOpen size={10} />
                     </span>
                   </div>
                   <div className="model-info-col">
                     <div className="model-title-row">
                       <span className="model-name">{model.name}</span>
-                      <span style={{
-                        fontSize: '0.62rem',
-                        fontWeight: 700,
-                        color: 'var(--color-accent)',
-                        background: 'rgba(229, 185, 92, 0.12)',
-                        padding: '2px 6px',
-                        borderRadius: '4px',
-                        marginLeft: '6px'
-                      }}>
-                        3 уровня
-                      </span>
+                      <span className="model-versions-count-badge">3 версии</span>
                     </div>
                     <div className="model-tags-row">
                       {model.tags && model.tags.map((tag, i) => (
@@ -1387,17 +1215,24 @@ const Create = () => {
                 className="create-model-card"
                 onClick={() => handleOpenModel(model)}
               >
-                <div 
-                  className="model-thumb-box"
-                  style={{ backgroundImage: `url(${model.preview})` }}
-                >
+                <div className="model-thumb-box">
+                  <img 
+                    src={model.preview_url || model.preview || getModelFallback(model.category)} 
+                    alt={model.name}
+                    className="model-thumb-img"
+                    loading="lazy"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = getModelFallback(model.category);
+                    }}
+                  />
                   <span className="model-cat-icon">
                     {model.category === 'video' ? (
                       <Play size={10} fill="#ffffff" />
                     ) : model.category === 'photo' ? (
                       <Camera size={10} />
                     ) : (
-                      <FileText size={10} />
+                      <BookOpen size={10} />
                     )}
                   </span>
                 </div>
@@ -1406,17 +1241,7 @@ const Create = () => {
                   <div className="model-title-row">
                     <span className="model-name">{model.name}</span>
                     {model.versions && model.versions.length > 0 && (
-                      <span style={{
-                        fontSize: '0.62rem',
-                        fontWeight: 700,
-                        color: 'var(--color-accent)',
-                        background: 'rgba(229, 185, 92, 0.12)',
-                        padding: '2px 6px',
-                        borderRadius: '4px',
-                        marginLeft: '6px'
-                      }}>
-                        3 уровня
-                      </span>
+                      <span className="model-versions-count-badge">3 версии</span>
                     )}
                   </div>
 
@@ -1476,7 +1301,7 @@ const Create = () => {
                   <span className="pkg-amount">100 CR</span>
                   <span className="pkg-desc">{t('pkgStoriesPhotos')}</span>
                 </div>
-                <button className="pkg-price-btn">199 ₽</button>
+                <button className="pkg-price-btn">{formatPrice(1490)}</button>
               </div>
 
               <div className="credit-pkg-card popular" onClick={() => { setBalance(balance + 350); setShowRechargeModal(false); showToast(t('tokensCredited', { amount: 350 }), 'token'); }}>
@@ -1485,7 +1310,7 @@ const Create = () => {
                   <span className="pkg-amount">350 CR</span>
                   <span className="pkg-desc">{t('pkgOptimalSet')}</span>
                 </div>
-                <button className="pkg-price-btn accent">490 ₽</button>
+                <button className="pkg-price-btn accent">{formatPrice(3990)}</button>
               </div>
 
               <div className="credit-pkg-card" onClick={() => { setBalance(balance + 1250); setShowRechargeModal(false); showToast(t('tokensCredited', { amount: 1250 }), 'token'); }}>
@@ -1494,7 +1319,7 @@ const Create = () => {
                   <span className="pkg-amount">1250 CR</span>
                   <span className="pkg-desc">{t('pkgMaxVideo')}</span>
                 </div>
-                <button className="pkg-price-btn">1 290 ₽</button>
+                <button className="pkg-price-btn">{formatPrice(9990)}</button>
               </div>
             </div>
 

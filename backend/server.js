@@ -32,6 +32,9 @@ const generateRouter = require('./routes/generate');
 const webhooksRouter = require('./routes/webhooks');
 const templatesRouter = require('./routes/templates');
 const uploadRouter = require('./routes/upload');
+const adminRouter = require('./routes/admin');
+const storiesRouter = require('./routes/stories');
+const modelsRouter = require('./routes/models');
 
 // Бот
 const { initBot } = require('./bot/index');
@@ -69,7 +72,9 @@ if (bot) {
   telegramService = new TelegramService(bot);
   // Инжектируем TelegramService в webhook-роут
   webhooksRouter.setTelegramService(telegramService);
-  console.log('[Server] ✓ Telegram-бот подключён');
+  generateRouter.setTelegramService(telegramService);
+  adminRouter.setBot(bot);
+  console.log('[Server] ✓ Telegram-бот подключён к Webhook, Generate и Admin Hub');
 }
 
 // ==========================================
@@ -87,20 +92,52 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Публичные роуты
-app.use('/api/models', (req, res) => {
-  const { getAllModels } = require('./config/models');
-  const { category } = req.query;
-  let models = getAllModels();
-  if (category) models = models.filter((m) => m.category === category);
-  models = models.filter((m) => m.category !== 'faceswap');
-  res.json({ models });
+// Публичные тарифы кредитов для клиентов
+app.get('/api/tariffs', async (req, res, next) => {
+  try {
+    const result = await db.query('SELECT * FROM credit_packages WHERE is_active = TRUE ORDER BY sort_order ASC, id ASC');
+    res.json({ tariffs: result.rows });
+  } catch (err) {
+    next(err);
+  }
 });
+
+// Публичные роуты
+app.use('/api/stories', storiesRouter);
+app.use('/api/models', modelsRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/generate', generateRouter);
 app.use('/api/webhooks', webhooksRouter);
 app.use('/api/templates', templatesRouter);
 app.use('/api/upload', uploadRouter);
+app.use('/api/admin', adminRouter);
+
+// Публичный эндпоинт для настроек студийного фотосета
+app.get('/api/settings/photoshoot', async (req, res, next) => {
+  try {
+    const result = await db.query("SELECT value FROM system_settings WHERE key = 'photoshoot_config'");
+    if (result.rows.length > 0) {
+      return res.json({ config: result.rows[0].value });
+    }
+    res.json({
+      config: {
+        cost: 10,
+        badge: "Editorial 4K",
+        count_badge: "+5",
+        title: "Профессиональный студийный сет",
+        desc: "5 журнальных кадров премиум-класса с идеальным светом и живыми эмоциями",
+        photos: [
+          "https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=300&auto=format&fit=crop",
+          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=300&auto=format&fit=crop",
+          "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=300&auto=format&fit=crop"
+        ]
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 
 // Webhook для Telegram (если в production mode)
 if (bot && process.env.WEBHOOK_URL) {

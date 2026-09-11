@@ -72,11 +72,12 @@ router.post('/ai-results', async (req, res) => {
       });
 
       // Отправить результат в Telegram
-      if (telegramService) {
+      if (telegramService && !task.telegram_notified) {
         const user = await db.query('SELECT telegram_id FROM users WHERE id = $1', [task.user_id]);
-        if (user.rows.length > 0) {
+        if (user.rows.length > 0 && user.rows[0].telegram_id) {
           const updatedTask = await getTask(taskId);
           await telegramService.sendResult(user.rows[0].telegram_id, updatedTask);
+          await db.query('UPDATE generations SET telegram_notified = TRUE WHERE task_id = $1', [taskId]);
         }
       }
 

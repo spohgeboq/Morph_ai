@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '../components/ToastContext';
 import { useLanguage } from '../components/LanguageContext';
+import { useCurrency } from '../components/CurrencyContext';
 import { 
   Plus, 
   ChevronRight, 
@@ -20,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useUser } from '../components/UserContext';
 import { fetchUserGenerations, checkTaskStatus } from '../services/api';
+import { formatModelDisplayName } from '../utils/modelNames';
 
 // Базовые соответствия стоимости моделей
 const MODEL_COSTS = {
@@ -38,13 +40,22 @@ const MODEL_COSTS = {
 
 const INITIAL_CHATS = [];
 
-
+const getCleanModelBadge = (chat) => {
+  if (!chat) return 'AI';
+  if (chat.category === 'text') {
+    const raw = chat.modelName || chat.versionName || 'AI Сказки';
+    return raw.split(' • ')[0].trim();
+  }
+  const raw = chat.versionName || chat.modelName || 'AI';
+  return raw.split(' • ')[0].trim();
+};
 
 const Chats = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { showToast, showConfirm } = useToast();
   const { t, translateDynamic } = useLanguage();
+  const { formatPrice } = useCurrency();
   const { currentUser, balance: userBalance } = useUser();
   const fileInputRef = useRef(null);
   const textareaRef = useRef(null);
@@ -77,35 +88,41 @@ const Chats = () => {
           if (serverGens && serverGens.length > 0) {
             setChats(prev => {
               if (prev && prev.length > 0) return prev;
-              return serverGens.map(g => ({
-                id: 'chat_' + (g.id || g.task_id),
-                title: g.prompt?.slice(0, 35) || 'Генерация',
-                modelId: g.model_name || 'kling',
-                modelName: g.model_name || 'MorphAI',
-                versionName: g.tier_name || g.model_name || 'Pro',
-                cost: g.credits_charged || 10,
-                category: g.task_type === 'video' ? 'video' : (g.task_type === 'text' ? 'text' : 'photo'),
-                time: 'Недавно',
-                dateStr: new Date(g.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }),
-                preview: g.result_url,
-                messages: [
-                  {
-                    id: 'm_u_' + g.id,
-                    sender: 'user',
-                    text: g.prompt,
-                    time: '12:00'
-                  },
-                  {
-                    id: 'm_a_' + g.id,
-                    sender: 'ai',
-                    type: g.task_type === 'video' ? 'video' : (g.task_type === 'text' ? 'text' : 'image'),
-                    prompt: g.prompt,
-                    mediaUrl: g.result_url,
-                    text: g.task_type === 'text' ? g.result_url : `Генерация завершена через ${g.model_name || 'MorphAI'}.`,
-                    time: '12:01'
-                  }
-                ]
-              }));
+              return serverGens.map(g => {
+                const isText = g.task_type === 'text';
+                const isVideo = g.task_type === 'video';
+                const cleanModel = formatModelDisplayName(g.model_name, g.task_type);
+
+                return {
+                  id: 'chat_' + (g.id || g.task_id),
+                  title: g.prompt?.slice(0, 35) || 'Генерация',
+                  modelId: g.model_name || (isText ? 'gpt-4o' : 'kling'),
+                  modelName: cleanModel,
+                  versionName: g.tier_name ? formatModelDisplayName(g.tier_name, g.task_type) : cleanModel,
+                  cost: g.credits_charged || (isText ? 3 : 10),
+                  category: isVideo ? 'video' : (isText ? 'text' : 'photo'),
+                  time: 'Недавно',
+                  dateStr: new Date(g.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }),
+                  preview: isText ? '' : g.result_url,
+                  messages: [
+                    {
+                      id: 'm_u_' + g.id,
+                      sender: 'user',
+                      text: g.prompt,
+                      time: '12:00'
+                    },
+                    {
+                      id: 'm_a_' + g.id,
+                      sender: 'ai',
+                      type: isVideo ? 'video' : (isText ? 'text' : 'image'),
+                      prompt: g.prompt,
+                      mediaUrl: isText ? null : g.result_url,
+                      text: isText ? (g.result_text || g.result_url || g.prompt) : `Генерация завершена через ${cleanModel}.`,
+                      time: '12:01'
+                    }
+                  ]
+                };
+              });
             });
           }
         }).catch(() => {});
@@ -139,6 +156,10 @@ const Chats = () => {
     }
     if (location.state?.work) {
       const work = location.state.work;
+      const isText = work.type === 'text';
+      const isVideo = work.type === 'video';
+      const cleanModel = formatModelDisplayName(work.model, work.type);
+
       const found = chats.find(c => 
         c.id === work.chatId || 
         c.title === work.title ||
@@ -150,14 +171,14 @@ const Chats = () => {
         const newSession = {
           id: 'chat_' + (work.id || Date.now()),
           title: work.title || 'Сессия генерации',
-          modelId: work.model?.toLowerCase().includes('kling') ? 'kling-hd' : 'flux-pro',
-          modelName: work.model || 'Flux 1.1 Pro',
-          versionName: work.model || 'Flux 1.1 Pro',
-          cost: work.cost || 10,
-          category: work.type === 'video' ? 'video' : 'photo',
+          modelId: work.model?.toLowerCase().includes('kling') ? 'kling-hd' : (isText ? 'gpt-4o' : 'flux-pro'),
+          modelName: cleanModel,
+          versionName: cleanModel,
+          cost: work.cost || (isText ? 3 : 10),
+          category: isVideo ? 'video' : (isText ? 'text' : 'photo'),
           time: 'Недавно',
           dateStr: work.date || 'Сегодня',
-          preview: work.thumb || work.media,
+          preview: isText ? '' : (work.thumb || work.media),
           messages: [
             {
               id: 'm_init_user',
@@ -168,10 +189,10 @@ const Chats = () => {
             {
               id: 'm_init_ai',
               sender: 'ai',
-              type: work.type === 'video' ? 'video' : 'image',
+              type: isVideo ? 'video' : (isText ? 'text' : 'image'),
               prompt: work.prompt,
-              mediaUrl: work.media || work.thumb,
-              text: `Шедевр успешно сгенерирован через ${work.model || 'Morphi AI'}.`,
+              mediaUrl: isText ? null : (work.media || work.thumb),
+              text: work.storyText || (isText ? work.prompt : `Шедевр успешно сгенерирован через ${cleanModel}.`),
               time: '14:31'
             }
           ]
@@ -199,7 +220,7 @@ const Chats = () => {
 
         if (res?.status === 'completed') {
           clearInterval(interval);
-          const resultUrl = res.resultUrl || res.output?.video || res.output?.image_url;
+          const resultUrl = res.resultUrl || res.result_url || res.output?.video || res.output?.image_url;
 
           setActiveChat(prev => {
             if (!prev) return null;
@@ -209,7 +230,7 @@ const Chats = () => {
                   ...m,
                   status: 'completed',
                   mediaUrl: resultUrl,
-                  text: prev.category === 'video' ? '🎬 Ваше видео готово!' : '🎨 Ваше изображение готово!',
+                  text: prev.category === 'video' ? 'Ваше видео готово!' : 'Ваше изображение готово!',
                 };
               }
               return m;
@@ -226,6 +247,7 @@ const Chats = () => {
           showToast('Шедевр готов! Результат доставлен.', 'success');
         } else if (res?.status === 'failed') {
           clearInterval(interval);
+          const errorMsg = res.errorMessage || res.error_message || 'Сбой провайдера';
           setActiveChat(prev => {
             if (!prev) return null;
             const updatedMessages = prev.messages.map(m => {
@@ -233,7 +255,7 @@ const Chats = () => {
                 return {
                   ...m,
                   status: 'failed',
-                  text: `❌ Ошибка генерации: ${res.errorMessage || 'Сбой провайдера'}. Кредиты возвращены.`,
+                  text: `Ошибка генерации: ${errorMsg}. Кредиты возвращены.`,
                 };
               }
               return m;
@@ -530,20 +552,27 @@ const Chats = () => {
                   onClick={() => setActiveChat(chat)}
                 >
                   {/* Левое наглядное медиа-превью результата */}
-                  <div 
-                    className="chat-card-thumb-box"
-                    style={chat.preview ? { backgroundImage: `url(${chat.preview})` } : {}}
-                  >
+                  <div className="chat-card-thumb-box">
                     {chat.category === 'text' ? (
                       <FileText size={22} color="#e5b95c" />
-                    ) : (
-                      <span className="chat-thumb-cat-badge">
-                        {chat.category === 'video' ? (
+                    ) : (chat.category === 'video' || (typeof chat.preview === 'string' && chat.preview.match(/\.(mp4|webm|mov|m4v)(\?.*)?$/i))) ? (
+                      <>
+                        {chat.preview ? (
+                          <video src={chat.preview} muted playsInline autoPlay loop className="chat-card-thumb-video" />
+                        ) : null}
+                        <span className="chat-thumb-cat-badge">
                           <Play size={10} fill="#ffffff" />
-                        ) : (
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        {chat.preview ? (
+                          <img src={chat.preview} alt="" className="chat-card-thumb-img" onError={(e) => { e.target.style.display = 'none'; }} />
+                        ) : null}
+                        <span className="chat-thumb-cat-badge">
                           <Camera size={10} />
-                        )}
-                      </span>
+                        </span>
+                      </>
                     )}
                   </div>
 
@@ -552,7 +581,7 @@ const Chats = () => {
                     <span className="chat-card-title">{chat.title}</span>
                     <div className="chat-card-meta-row">
                       <span className="chat-card-model-pill">
-                        {chat.modelName} • {chat.versionName}
+                        {getCleanModelBadge(chat)}
                       </span>
                     </div>
                   </div>
@@ -650,7 +679,7 @@ const Chats = () => {
                       <div className="ai-pending-container" style={{ padding: '20px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', textAlign: 'center' }}>
                         <div className="generation-spinner" style={{ width: '32px', height: '32px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#ff4d8d', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
                         <div style={{ fontSize: '13px', color: '#f3f4f6', fontWeight: 500 }}>{msg.text || 'Генерация в процессе...'}</div>
-                        <div style={{ fontSize: '11px', color: '#9ca3af' }}>⏳ Создаём шедевр, подождите немного...</div>
+                        <div style={{ fontSize: '11px', color: '#9ca3af' }}>Создаём шедевр, подождите немного...</div>
                       </div>
                     ) : msg.mediaUrl ? (
                       <div className="ai-media-container">
@@ -713,7 +742,7 @@ const Chats = () => {
 
                       <div className="ai-bubble-status-row">
                         <span className="ai-status-text">
-                          {msg.status === 'pending' ? '⏳ Обработка' : msg.status === 'failed' ? '❌ Сбой' : `✓ ${t('ready')}`} • {activeChat.versionName || activeChat.modelName}
+                          {msg.status === 'pending' ? 'Обработка' : msg.status === 'failed' ? 'Сбой' : t('ready')} • {activeChat.versionName || activeChat.modelName}
                         </span>
                         <span className="bubble-time-stamp">{msg.time}</span>
                       </div>
@@ -786,7 +815,7 @@ const Chats = () => {
                 onKeyDown={handleKeyDown}
               />
 
-              {/* Кнопка отправки с прозрачной стоимостью [ ➤ 8 CR ] */}
+              {/* Кнопка отправки со стоимостью */}
               <button 
                 className="session-send-action-btn"
                 onClick={handleSendReply}
@@ -821,7 +850,7 @@ const Chats = () => {
                   <span className="pkg-amount">100 CR</span>
                   <span className="pkg-desc">Для сказок и фото</span>
                 </div>
-                <button className="pkg-price-btn">199 ₽</button>
+                <button className="pkg-price-btn">{formatPrice(1490)}</button>
               </div>
 
               <div className="credit-pkg-card popular" onClick={() => { setBalance(b => b + 350); setShowRechargeModal(false); showToast('Начислено +350 кредитов!', 'token'); }}>
@@ -830,7 +859,7 @@ const Chats = () => {
                   <span className="pkg-amount">350 CR</span>
                   <span className="pkg-desc">Оптимальный набор</span>
                 </div>
-                <button className="pkg-price-btn accent">490 ₽</button>
+                <button className="pkg-price-btn accent">{formatPrice(3990)}</button>
               </div>
 
               <div className="credit-pkg-card" onClick={() => { setBalance(b => b + 1250); setShowRechargeModal(false); showToast('Начислено +1250 кредитов!', 'token'); }}>
@@ -839,7 +868,7 @@ const Chats = () => {
                   <span className="pkg-amount">1250 CR</span>
                   <span className="pkg-desc">Максимум видео и музыки</span>
                 </div>
-                <button className="pkg-price-btn">1 290 ₽</button>
+                <button className="pkg-price-btn">{formatPrice(9990)}</button>
               </div>
             </div>
           </div>

@@ -1,7 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../components/ToastContext';
 import { useLanguage } from '../components/LanguageContext';
+import { useCurrency } from '../components/CurrencyContext';
 import { 
   Sparkles, 
   Plus, 
@@ -32,12 +33,22 @@ import {
 } from 'lucide-react';
 
 import { useUser } from '../components/UserContext';
+import { 
+  fetchPublicStories, 
+  fetchPublicTemplates, 
+  fetchPhotoshootConfig, 
+  fetchPublicModels,
+  startPhotoshoot,
+  checkPhotoshootStatus,
+  uploadAdminMedia
+} from '../services/api';
 
 const Home = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { t, translateDynamic } = useLanguage();
-  const { balance, setBalance } = useUser();
+  const { formatPrice } = useCurrency();
+  const { currentUser, balance, setBalance, refreshUser } = useUser();
 
   // Список моделей ИИ для генерации фото и видео
   const aiModels = [
@@ -49,49 +60,8 @@ const Home = () => {
   const [selectedModel, setSelectedModel] = useState(aiModels[0]);
   const [showModelModal, setShowModelModal] = useState(false);
 
-  // 1. Stories с реальными видео
-  const stories = [
-    { 
-      id: 1, 
-      title: 'Kling 1.5', 
-      tag: 'Видео-морфинг', 
-      image: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=300&auto=format&fit=crop', 
-      video: 'https://assets.mixkit.co/videos/preview/mixkit-futuristic-robot-turning-its-head-41477-large.mp4',
-      modelName: 'Kling 1.5 AI',
-      prompt: 'Киберпанк девушка с неоновыми глазами под дождем Токио',
-      unread: true 
-    },
-    { 
-      id: 2, 
-      title: 'Old Money', 
-      tag: '35mm Film', 
-      image: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=300&auto=format&fit=crop', 
-      video: 'https://assets.mixkit.co/videos/preview/mixkit-hands-holding-a-vintage-camera-42845-large.mp4',
-      modelName: 'Flux 1.1 Pro',
-      prompt: 'Эстетика старых денег, винтажная пленка 35mm, элегантный стиль',
-      unread: true 
-    },
-    { 
-      id: 3, 
-      title: 'Сказка', 
-      tag: 'Книга ИИ', 
-      image: 'https://images.unsplash.com/photo-1535295972055-1c762f4483e5?q=80&w=300&auto=format&fit=crop', 
-      video: 'https://assets.mixkit.co/videos/preview/mixkit-fireflies-glowing-in-the-forest-at-night-42805-large.mp4',
-      modelName: 'Claude 3.5 + Flux',
-      prompt: 'Волшебный лес светлячков и тайны древнего королевства',
-      unread: true 
-    },
-    { 
-      id: 4, 
-      title: 'Неон 2077', 
-      tag: 'Sci-Fi', 
-      image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=300&auto=format&fit=crop', 
-      video: 'https://assets.mixkit.co/videos/preview/mixkit-flying-through-neon-lit-cubes-in-cyberspace-42777-large.mp4',
-      modelName: 'Kling 1.5 HD',
-      prompt: 'Полет сквозь киберпространство и неоновые горизонты',
-      unread: false 
-    }
-  ];
+  // 1. Stories из БД (если в базе ничего нет - раздел аккуратно скрывается)
+  const [stories, setStories] = useState([]);
 
   // Активная сторис (модалка строго по центру с видео)
   const [activeStory, setActiveStory] = useState(null);
@@ -185,6 +155,81 @@ const Home = () => {
     }
   ];
 
+  // Шаблоны и конфиг фотосета из БД (Примеры генераций)
+  const [templatesList, setTemplatesList] = useState([]);
+  const [photoshootConfig, setPhotoshootConfig] = useState(() => {
+    try {
+      const cached = localStorage.getItem('morphai_photoshoot_config');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && parsed.photos?.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return {
+      badge: 'Editorial 4K',
+      cost: 10,
+      count_badge: '+5',
+      title: 'Студийный фотосет',
+      desc: '5 премиальных 4K-портретов от студийного глянца до уличного лайфстайла из одного селфи',
+      photos: [
+        'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=300&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=300&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=300&auto=format&fit=crop'
+      ]
+    };
+  });
+
+  // Загрузка динамических данных: Stories, Photoshoot Config, Templates
+  useEffect(() => {
+    fetchPublicStories().then(data => {
+      if (Array.isArray(data)) {
+        setStories(data);
+      }
+    }).catch(err => console.error('Error fetching stories:', err));
+
+    fetchPhotoshootConfig().then(cfg => {
+      if (cfg && cfg.photos && cfg.photos.length > 0) {
+        setPhotoshootConfig(cfg);
+        try {
+          localStorage.setItem('morphai_photoshoot_config', JSON.stringify(cfg));
+        } catch (e) {}
+      }
+    }).catch(err => console.error('Error fetching photoshoot config:', err));
+
+    fetchPublicTemplates().then(data => {
+      if (Array.isArray(data)) {
+        const isVideoMedia = (url) => typeof url === 'string' && /\.(mp4|webm|mov|m4v)(\?.*)?$/i.test(url.trim());
+        const mapped = data.map(item => {
+          const isVideo = isVideoMedia(item.video_url) || isVideoMedia(item.media_url) || (item.type === 'video' && !item.thumb_url);
+          return {
+            id: item.id,
+            type: isVideo ? 'video' : 'photo',
+            title: item.title || item.name || '',
+            category: item.category || (isVideo ? 'video' : 'photo'),
+            model: item.model_name || 'Flux 1.1 Pro',
+            cost: item.cost !== undefined ? item.cost : 10,
+            thumb: item.thumb_url || item.thumb || item.preview_url || item.media_url || item.video_url,
+            videoUrl: isVideo ? (item.video_url || item.media_url) : null,
+            prompt: item.prompt || '',
+            isPromptLocked: item.is_prompt_locked ?? (item.default_params?.isPromptLocked ?? (!item.prompt || !item.prompt.trim())),
+            variableName: item.variable_name || item.default_params?.variableName || '',
+            variablePlaceholder: item.variable_placeholder || item.default_params?.variablePlaceholder || ''
+          };
+        });
+        setTemplatesList(mapped);
+      }
+    }).catch(err => console.error('Error fetching templates:', err));
+
+    const handlePsUpdate = (e) => {
+      if (e.detail) setPhotoshootConfig(e.detail);
+    };
+    window.addEventListener('morphai_photoshoot_updated', handlePsUpdate);
+
+    return () => {
+      window.removeEventListener('morphai_photoshoot_updated', handlePsUpdate);
+    };
+  }, []);
+
   // Состояние детального экрана шаблона
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [userPhoto, setUserPhoto] = useState(null);
@@ -211,12 +256,18 @@ const Home = () => {
   // Генерация по выбранному шаблону: переход в реальную студию создания
   const handleGenerateFromTemplate = () => {
     if (!selectedTemplate) return;
-    const modelToUse = (selectedTemplate.model || '').toLowerCase().includes('kling') ? 'kling-hd' : 'flux-pro';
+    const tmplModel = (selectedTemplate.model || '').toLowerCase().trim();
+    const matched = aiModels.find(m => {
+      const mName = m.name?.toLowerCase() || '';
+      const mId = m.id?.toLowerCase() || '';
+      return tmplModel.includes(mName) || mName.includes(tmplModel) || tmplModel.includes(mId);
+    }) || aiModels[0];
+
     const finalPrompt = selectedTemplate.prompt + (templateVariable ? ` (${selectedTemplate.variableName}: ${templateVariable})` : '');
     setSelectedTemplate(null);
     navigate('/create', {
       state: {
-        model: modelToUse,
+        model: matched.id,
         prompt: finalPrompt,
       }
     });
@@ -240,35 +291,39 @@ const Home = () => {
   // Модалка пополнения
   const [showRechargeModal, setShowRechargeModal] = useState(false);
 
-  // AI Студия: Профессиональная Фотосессия 10 в 1
+  // AI Студия: Профессиональная Фотосессия (5 реальных 4K фото)
   const [photoshootPhoto, setPhotoshootPhoto] = useState(null);
+  const [photoshootFile, setPhotoshootFile] = useState(null);
+  const [photoshootUploadedUrl, setPhotoshootUploadedUrl] = useState(null);
+  const [isUploadingPhotoshoot, setIsUploadingPhotoshoot] = useState(false);
   const [isPhotoshootGenerating, setIsPhotoshootGenerating] = useState(false);
   const [photoshootStep, setPhotoshootStep] = useState(0);
   const [generatedPhotoshootPack, setGeneratedPhotoshootPack] = useState(null);
 
-  const photoshootStyles = [
-    { id: 1, title: 'Vogue Studio', tag: 'Глянец', img: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=600&auto=format&fit=crop' },
-    { id: 2, title: 'Forbes Business', tag: 'Премиум', img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=600&auto=format&fit=crop' },
-    { id: 3, title: 'Old Money 35mm', tag: 'Винтаж', img: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=600&auto=format&fit=crop' },
-    { id: 4, title: 'Cyberpunk 2077', tag: 'Sci-Fi', img: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=600&auto=format&fit=crop' },
-    { id: 5, title: 'Cinematic Sunset', tag: 'Кино', img: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=600&auto=format&fit=crop' },
-    { id: 6, title: 'B&W Editorial', tag: 'Классика', img: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=600&auto=format&fit=crop' },
-    { id: 7, title: 'Parisian Street', tag: 'Лайфстайл', img: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=600&auto=format&fit=crop' },
-    { id: 8, title: '3D Pixar Avatar', tag: 'Аватар', img: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=600&auto=format&fit=crop' },
-    { id: 9, title: 'Neon Tokyo Noir', tag: 'Неон', img: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?q=80&w=600&auto=format&fit=crop' },
-    { id: 10, title: 'Golden Hour Glamour', tag: 'Свет', img: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=600&auto=format&fit=crop' }
-  ];
-
-  const handlePhotoshootUpload = (e) => {
+  const handlePhotoshootUpload = async (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setPhotoshootPhoto(url);
+    if (!file) return;
+
+    setPhotoshootFile(file);
+    const localUrl = URL.createObjectURL(file);
+    setPhotoshootPhoto(localUrl);
+
+    setIsUploadingPhotoshoot(true);
+    try {
+      const uploaded = await uploadAdminMedia(file, 'selfies');
+      if (uploaded?.url) {
+        setPhotoshootUploadedUrl(uploaded.url);
+      }
+    } catch (err) {
+      console.warn('Photoshoot background upload warning:', err.message);
+    } finally {
+      setIsUploadingPhotoshoot(false);
     }
   };
 
-  const handleExecutePhotoshoot = () => {
-    if (balance < 15) {
+  const handleExecutePhotoshoot = async () => {
+    const shootCost = Number(photoshootConfig?.cost) || 10;
+    if (balance < shootCost) {
       showToast('Недостаточно кредитов для фотосессии! Пополните баланс.', 'error');
       setShowRechargeModal(true);
       return;
@@ -277,21 +332,74 @@ const Home = () => {
     setIsPhotoshootGenerating(true);
     setPhotoshootStep(1);
 
-    const interval = setInterval(() => {
-      setPhotoshootStep(prev => {
-        if (prev >= 10) {
-          clearInterval(interval);
-          setIsPhotoshootGenerating(false);
-          setBalance(b => b - 15);
-          setGeneratedPhotoshootPack({
-            selfie: photoshootPhoto || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=600&auto=format&fit=crop',
-            photos: photoshootStyles
-          });
-          return 10;
-        }
-        return prev + 1;
+    try {
+      let finalImageUrl = photoshootUploadedUrl;
+
+      // Если файл еще не загрузился в R2, загружаем его сейчас
+      if (!finalImageUrl && photoshootFile) {
+        showToast('Загрузка селфи в Cloudflare R2...', 'info');
+        const uploaded = await uploadAdminMedia(photoshootFile, 'selfies');
+        finalImageUrl = uploaded?.url;
+        setPhotoshootUploadedUrl(finalImageUrl);
+      }
+
+      if (!finalImageUrl) {
+        throw new Error('Пожалуйста, выберите селфи повторно');
+      }
+
+      showToast('Запуск AI Фотостудии (создание 5 портретов)...', 'info');
+      const startRes = await startPhotoshoot({
+        telegram_id: currentUser?.telegram_id || currentUser?.id,
+        user_id: currentUser?.id,
+        image_url: finalImageUrl
       });
-    }, 280);
+
+      if (!startRes.success || !startRes.batch_id) {
+        throw new Error(startRes.message || 'Не удалось запустить фотостудию');
+      }
+
+      if (startRes.balance !== undefined) {
+        setBalance(startRes.balance);
+      } else {
+        setBalance(b => Math.max(0, b - shootCost));
+      }
+
+      const batchId = startRes.batch_id;
+
+      // Поллинг статуса каждые 2.5 секунды
+      const pollInterval = setInterval(async () => {
+        try {
+          const statusRes = await checkPhotoshootStatus(batchId);
+          if (statusRes.success) {
+            const completedCount = statusRes.completed_count || 0;
+            setPhotoshootStep(Math.max(1, Math.min(5, completedCount + 1)));
+
+            if (statusRes.is_complete || completedCount >= 5) {
+              clearInterval(pollInterval);
+              setIsPhotoshootGenerating(false);
+              setGeneratedPhotoshootPack({
+                selfie: finalImageUrl,
+                photos: statusRes.photos || []
+              });
+              showToast('✨ Все 5 4K портретов успешно созданы!', 'success');
+              if (refreshUser) refreshUser();
+            }
+          }
+        } catch (pollErr) {
+          console.error('[Photoshoot Poll Error]:', pollErr);
+        }
+      }, 2500);
+
+      // Защитный таймаут на 4 минуты
+      setTimeout(() => {
+        clearInterval(pollInterval);
+        setIsPhotoshootGenerating(false);
+      }, 240000);
+
+    } catch (err) {
+      setIsPhotoshootGenerating(false);
+      showToast(err.message || 'Ошибка генерации фотосессии', 'error');
+    }
   };
 
   // Быстрый запуск из Magic Bar: перенаправление в реальную Студию
@@ -332,7 +440,7 @@ const Home = () => {
   // Повторить результат референса
   const handleUseReference = (refItem) => {
     if (refItem.category === 'fairy') {
-      setShowStoryModal(true);
+      navigate('/create', { state: { category: 'text' } });
     } else {
       setMagicPrompt(refItem.prompt);
       const matched = aiModels.find(m => m.name.toLowerCase().includes(refItem.model.toLowerCase().split(' ')[0])) || aiModels[0];
@@ -374,26 +482,28 @@ const Home = () => {
         </div>
       </header>
 
-      {/* 2. Карусель историй (Stories-пресеты с видео) */}
-      <section className="stories-section">
-        <div className="stories-scroll">
-          {stories.map(story => (
-            <div 
-              key={story.id} 
-              className="story-item"
-              onClick={() => setActiveStory(story)}
-            >
-              <div className={`story-avatar-ring ${story.unread ? 'unread' : ''}`}>
-                <div 
-                  className="story-avatar-img"
-                  style={{ backgroundImage: `url(${story.image})` }}
-                />
+      {/* 2. Карусель историй (Stories-пресеты с видео) — если пусто, раздел скрывается */}
+      {stories && stories.length > 0 && (
+        <section className="stories-section">
+          <div className="stories-scroll">
+            {stories.map(story => (
+              <div 
+                key={story.id} 
+                className="story-item"
+                onClick={() => setActiveStory(story)}
+              >
+                <div className={`story-avatar-ring ${story.unread ? 'unread' : ''}`}>
+                  <div 
+                    className="story-avatar-img"
+                    style={{ backgroundImage: `url(${story.image_url || story.cover_url || story.image})` }}
+                  />
+                </div>
+                <span className="story-label">{translateDynamic(story.title)}</span>
               </div>
-              <span className="story-label">{translateDynamic(story.title)}</span>
-            </div>
-          ))}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* 3. ПРОФЕССИОНАЛЬНЫЙ СТУДИЙНЫЙ ФОТОСЕТ (EDITORIAL HERO CARD) */}
       <section className="photoshoot-hero-section">
@@ -402,19 +512,19 @@ const Home = () => {
           <div className="editorial-card-main">
             <div className="editorial-left-col">
               <div className="editorial-badge-row">
-                <span className="editorial-gold-pill">{t('studioBadge')}</span>
-                <span className="editorial-cost-tag">15 CR</span>
+                <span className="editorial-gold-pill">{photoshootConfig.badge || t('studioBadge')}</span>
+                <span className="editorial-cost-tag">{photoshootConfig.cost || 10} CR</span>
               </div>
-              <h3>{t('studioTitle')}</h3>
-              <p>{t('studioDesc')}</p>
+              <h3>{photoshootConfig.title || t('studioTitle')}</h3>
+              <p>{photoshootConfig.desc || t('studioDesc')}</p>
             </div>
 
             {/* Правая часть: стильный веер из 3 накладывающихся карточек */}
             <div className="editorial-fan-stack">
-              <div className="fan-card fan-1" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=300&auto=format&fit=crop)' }} />
-              <div className="fan-card fan-2" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=300&auto=format&fit=crop)' }} />
-              <div className="fan-card fan-3" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=300&auto=format&fit=crop)' }}>
-                <span className="fan-count-badge">+10</span>
+              <div className="fan-card fan-1" style={{ backgroundImage: `url(${photoshootConfig.photos?.[0] || 'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=300&auto=format&fit=crop'})` }} />
+              <div className="fan-card fan-2" style={{ backgroundImage: `url(${photoshootConfig.photos?.[1] || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=300&auto=format&fit=crop'})` }} />
+              <div className="fan-card fan-3" style={{ backgroundImage: `url(${photoshootConfig.photos?.[2] || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=300&auto=format&fit=crop'})` }}>
+                <span className="fan-count-badge">{photoshootConfig.count_badge || '+5'}</span>
               </div>
             </div>
           </div>
@@ -448,7 +558,7 @@ const Home = () => {
                   ) : (
                     <div className="editorial-btn-content">
                       <Sparkles size={16} />
-                      <span>{t('studioBtnReady')}</span>
+                      <span>{`Создать 5 фотосессий (${photoshootConfig.cost || 10} CR)`}</span>
                     </div>
                   )}
                 </button>
@@ -462,7 +572,7 @@ const Home = () => {
                   style={{ display: 'none' }}
                 />
                 <Camera size={18} />
-                <span>{t('studioBtn')}</span>
+                <span>{`Загрузить селфи и создать 5 фото (${photoshootConfig.cost || 10} CR)`}</span>
               </label>
             )}
           </div>
@@ -474,7 +584,7 @@ const Home = () => {
         <h3 className="section-heading">{t('specModesTitle')}</h3>
         <div 
           className="clean-card story-hero-card"
-          onClick={() => setShowStoryModal(true)}
+          onClick={() => navigate('/create', { state: { category: 'text' } })}
         >
           <div className="card-top-row">
             <div className="clean-card-icon story-bg">
@@ -492,69 +602,71 @@ const Home = () => {
       </section>
 
       {/* 5. БЕСКОНЕЧНАЯ ВИЗУАЛЬНАЯ ЛЕНТА (СНАЧАЛА ЖИВЫЕ ВИДЕО, НИЖЕ ФОТО 4K) */}
-      <section className="references-section">
-        <div className="references-header">
-          <div className="ref-title-wrap">
-            <h3 className="ref-minimal-title">{t('examplesTitle')}</h3>
+      {templatesList.length > 0 && (
+        <section className="references-section">
+          <div className="references-header">
+            <div className="ref-title-wrap">
+              <h3 className="ref-minimal-title">{t('examplesTitle')}</h3>
+            </div>
           </div>
-        </div>
 
-        {/* Сетка шаблонов: чистый визуал без кнопок, как на фото 1 и 2 конкурента */}
-        <div className="references-grid">
-          {references.map((item) => (
-            <div 
-              key={item.id} 
-              className="reference-card template-card"
-              onClick={() => setSelectedTemplate(item)}
-            >
-              <div className="template-media-wrap">
-                {item.type === 'video' && item.videoUrl ? (
-                  <video 
-                    src={item.videoUrl}
-                    poster={item.thumb}
-                    autoPlay 
-                    loop 
-                    muted 
-                    playsInline 
-                    className="template-media-video"
-                  />
-                ) : (
-                  <div 
-                    className="template-media-photo"
-                    style={{ backgroundImage: `url(${item.thumb})` }}
-                  />
-                )}
-
-                {/* Затемнение снизу для контрастного белого названия */}
-                <div className="template-scrim-overlay" />
-
-                {/* Сверху слева: аккуратные круглые чипы-иконки как на фото 1 и 2 */}
-                <div className="template-top-badges">
-                  {item.type === 'video' ? (
-                    <>
-                      <div className="template-icon-chip">
-                        <Play size={10} fill="#ffffff" color="#ffffff" />
-                      </div>
-                      <div className="template-icon-chip">
-                        <Camera size={11} color="#ffffff" />
-                      </div>
-                    </>
+          {/* Сетка шаблонов: чистый визуал без кнопок, как на фото 1 и 2 конкурента */}
+          <div className="references-grid">
+            {templatesList.map((item) => (
+              <div 
+                key={item.id} 
+                className="reference-card template-card"
+                onClick={() => setSelectedTemplate(item)}
+              >
+                <div className="template-media-wrap">
+                  {item.type === 'video' && item.videoUrl ? (
+                    <video 
+                      src={item.videoUrl}
+                      poster={item.thumb}
+                      autoPlay 
+                      loop 
+                      muted 
+                      playsInline 
+                      className="template-media-video"
+                    />
                   ) : (
-                    <div className="template-icon-chip">
-                      <Camera size={12} color="#ffffff" />
-                    </div>
+                    <div 
+                      className="template-media-photo"
+                      style={{ backgroundImage: `url(${item.thumb})` }}
+                    />
                   )}
-                </div>
 
-                {/* Снизу: четкий жирный заголовок без громоздких кнопок */}
-                <div className="template-bottom-title">
-                  <h4>{translateDynamic(item.title)}</h4>
+                  {/* Затемнение снизу для контрастного белого названия */}
+                  <div className="template-scrim-overlay" />
+
+                  {/* Сверху слева: аккуратные круглые чипы-иконки как на фото 1 и 2 */}
+                  <div className="template-top-badges">
+                    {item.type === 'video' ? (
+                      <>
+                        <div className="template-icon-chip">
+                          <Play size={10} fill="#ffffff" color="#ffffff" />
+                        </div>
+                        <div className="template-icon-chip">
+                          <Camera size={11} color="#ffffff" />
+                        </div>
+                      </>
+                    ) : (
+                      <div className="template-icon-chip">
+                        <Camera size={12} color="#ffffff" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Снизу: четкий жирный заголовок без громоздких кнопок */}
+                  <div className="template-bottom-title">
+                    <h4>{translateDynamic(item.title)}</h4>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* =========================================================
           ПОЛНОЭКРАННЫЙ ЦЕНТРИРОВАННЫЙ STORIES-ПЛЕЕР С ВИДЕО
@@ -571,24 +683,33 @@ const Home = () => {
             {/* Шапка сторис */}
             <div className="story-top-info">
               <div className="story-meta-row">
-                <span className="story-model-chip">{activeStory.modelName}</span>
-                <span className="story-cat-chip">{activeStory.tag}</span>
+                <span className="story-model-chip">{activeStory.model_name || activeStory.modelName || 'AI Model'}</span>
+                {activeStory.tag && <span className="story-cat-chip">{activeStory.tag}</span>}
               </div>
               <button className="story-close-round" onClick={() => setActiveStory(null)}>
                 <X size={18} />
               </button>
             </div>
 
-            {/* Реальное воспроизводимое видео */}
+            {/* Реальное воспроизводимое медиа (видео или фото) */}
             <div className="story-video-wrapper">
-              <video 
-                src={activeStory.video} 
-                autoPlay 
-                loop 
-                muted 
-                playsInline 
-                className="story-video-element"
-              />
+              {((activeStory.video_url || activeStory.video || activeStory.media_url)?.match(/\.(mp4|webm|mov)(\?.*)?$/i) || !(activeStory.image_url || activeStory.cover_url || activeStory.image)) ? (
+                <video 
+                  src={activeStory.video_url || activeStory.video || activeStory.media_url} 
+                  autoPlay 
+                  loop 
+                  muted 
+                  playsInline 
+                  className="story-video-element"
+                />
+              ) : (
+                <img 
+                  src={activeStory.image_url || activeStory.cover_url || activeStory.image || activeStory.video_url || activeStory.media_url} 
+                  alt={activeStory.title}
+                  className="story-video-element"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              )}
             </div>
 
             {/* Нижний блок сторис с кнопкой применения шаблона */}
@@ -920,7 +1041,7 @@ const Home = () => {
             {/* 4. Блок «ПРОМПТ» (Скрытый или с кнопкой копирования) */}
             <div className="tmpl-section-group">
               <h4 className="tmpl-section-heading">ПРОМПТ</h4>
-              {selectedTemplate.isPromptLocked ? (
+              {selectedTemplate.isPromptLocked || !selectedTemplate.prompt?.trim() ? (
                 <div className="tmpl-prompt-box locked">
                   <div className="locked-icon-wrap">
                     <Lock size={20} color="#e5b95c" />
@@ -986,14 +1107,14 @@ const Home = () => {
       )}
 
       {/* =========================================================
-          МОДАЛКА ГОТОВОЙ ФОТОСЕССИИ ИЗ 10 ФОТО
+          МОДАЛКА ГОТОВОЙ ФОТОСЕССИИ ИЗ 5 ФОТО (PIAPI KONTEXT)
           ========================================================= */}
       {generatedPhotoshootPack && (
         <div className="photoshoot-modal-overlay">
           <div className="photoshoot-modal-header">
             <div className="modal-title-info">
               <h3>Ваша AI Фотосессия готова!</h3>
-              <span className="modal-title-sub">Создано 10 профессиональных портретов в 4K Ultra HD</span>
+              <span className="modal-title-sub">Создано 5 профессиональных портретов в 4K Ultra HD</span>
             </div>
             <button 
               className="photoshoot-modal-close"
@@ -1005,21 +1126,31 @@ const Home = () => {
 
           <div className="photoshoot-modal-gallery">
             <div className="photoshoot-grid-10">
-              {generatedPhotoshootPack.photos.map((item, index) => (
-                <div key={item.id} className="photoshoot-result-item">
-                  <img src={item.img} alt={item.title} className="photoshoot-result-img" />
-                  <div className="result-item-overlay">
-                    <span className="result-style-title">{item.title}</span>
-                    <button 
-                      className="result-download-btn"
-                      onClick={() => showToast(`Фото «${item.title}» сохранено!`, 'success')}
-                    >
-                      <ArrowUpRight size={14} />
-                      <span>4K</span>
-                    </button>
+              {generatedPhotoshootPack.photos.map((item, index) => {
+                const photoSrc = item.result_url || item.img;
+                return (
+                  <div key={item.id || index} className="photoshoot-result-item">
+                    <img src={photoSrc} alt={item.title} className="photoshoot-result-img" />
+                    <div className="result-item-overlay">
+                      <span className="result-style-title">{item.title}</span>
+                      <a 
+                        href={photoSrc} 
+                        download={`morphai_${item.title || 'photo'}.jpg`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="result-download-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          showToast(`Фото «${item.title}» сохраняется!`, 'success');
+                        }}
+                      >
+                        <ArrowUpRight size={14} />
+                        <span>4K</span>
+                      </a>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -1027,12 +1158,12 @@ const Home = () => {
             <button 
               className="btn-primary photoshoot-download-all-btn"
               onClick={() => {
-                showToast('Все 10 фото успешно сохранены в галерею!', 'success');
+                showToast('Альбом из 5 портретов успешно сохранен!', 'success');
                 setGeneratedPhotoshootPack(null);
               }}
             >
               <Check size={18} />
-              <span>Сохранить весь альбом из 10 фото</span>
+              <span>Сохранить альбом из 5 фото</span>
             </button>
           </div>
         </div>
@@ -1060,7 +1191,7 @@ const Home = () => {
                   <span className="pkg-amount">100 CR</span>
                   <span className="pkg-desc">{t('pkgStoriesPhotos')}</span>
                 </div>
-                <button className="pkg-price-btn">199 ₽</button>
+                <button className="pkg-price-btn">{formatPrice(1490)}</button>
               </div>
 
               <div className="credit-pkg-card popular" onClick={() => { setBalance(b => b + 350); setShowRechargeModal(false); showToast(t('tokensCredited', { amount: 350 }), 'token'); }}>
@@ -1069,7 +1200,7 @@ const Home = () => {
                   <span className="pkg-amount">350 CR</span>
                   <span className="pkg-desc">{t('pkgOptimalSet')}</span>
                 </div>
-                <button className="pkg-price-btn accent">490 ₽</button>
+                <button className="pkg-price-btn accent">{formatPrice(3990)}</button>
               </div>
 
               <div className="credit-pkg-card" onClick={() => { setBalance(b => b + 1250); setShowRechargeModal(false); showToast(t('tokensCredited', { amount: 1250 }), 'token'); }}>
@@ -1078,7 +1209,7 @@ const Home = () => {
                   <span className="pkg-amount">1250 CR</span>
                   <span className="pkg-desc">{t('pkgMaxVideo')}</span>
                 </div>
-                <button className="pkg-price-btn">1 290 ₽</button>
+                <button className="pkg-price-btn">{formatPrice(9990)}</button>
               </div>
             </div>
 

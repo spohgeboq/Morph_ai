@@ -11,34 +11,36 @@ function setupStartHandler(bot) {
     const user = msg.from;
 
     try {
-      // Upsert пользователя
+      // Upsert пользователя (регистрация сразу же без нажатия доп. кнопок)
       const result = await db.query(
-        `INSERT INTO users (telegram_id, username, first_name)
-         VALUES ($1, $2, $3)
+        `INSERT INTO users (telegram_id, username, first_name, language)
+         VALUES ($1, $2, $3, $4)
          ON CONFLICT (telegram_id) DO UPDATE SET
            username = COALESCE(EXCLUDED.username, users.username),
            first_name = COALESCE(EXCLUDED.first_name, users.first_name),
            updated_at = NOW()
          RETURNING *`,
-        [user.id, user.username || null, user.first_name || null]
+        [user.id, user.username || null, user.first_name || null, (user.language_code || 'ru').slice(0, 5)]
       );
 
       const dbUser = result.rows[0];
-      const isNew = dbUser.created_at === dbUser.updated_at;
+      const isNew = Math.abs(new Date(dbUser.created_at) - new Date(dbUser.updated_at)) < 3000;
 
       const greeting = isNew
         ? `🎉 Добро пожаловать в *MorphAI*, ${user.first_name || 'друг'}!\n\n` +
-          `Вам начислено *${dbUser.balance} кредитов* для старта.\n\n`
+          `✅ *Вы автоматически авторизованы и зарегистрированы в системе!*\n` +
+          `💰 Вам начислено *${dbUser.balance} кредитов* для старта.\n` +
+          `🆔 Ваш Telegram ID: \`${user.id}\`\n\n`
         : `👋 С возвращением, ${user.first_name || 'друг'}!\n\n` +
-          `Ваш баланс: *${dbUser.balance} CR*\n\n`;
+          `✅ Вы авторизованы. Баланс: *${dbUser.balance} CR*\n\n`;
 
       const description =
-        '🤖 Я — ваш мультимодальный ИИ-хаб. Вот что я умею:\n\n' +
-        '📸 *Фото* — Flux, DALL-E 3, Imagen 3, Seedream и другие\n' +
+        '🤖 Я — ваш мультимодальный ИИ-хаб:\n\n' +
+        '📸 *Фотостудия 4K* — Flux, DALL-E 3, Imagen 3, Seedream\n' +
         '🎬 *Видео* — Kling AI, Hailuo, Luma, Runway, Seedance\n' +
-        '✍️ *Текст* — GPT-4o, Claude, Gemini, Llama 3\n' +
-        '🔄 *Face Swap* — замена лица в видео\n\n' +
-        'Выберите категорию ниже 👇';
+        '✍️ *Текст & Истории* — GPT-4o, Claude, Gemini, Llama 3\n' +
+        '🔄 *Face Swap* — замена лиц в видео и портретах\n\n' +
+        'Запустите веб-приложение или выберите действие ниже 👇';
 
       await bot.sendMessage(chatId, greeting + description, {
         parse_mode: 'Markdown',
@@ -48,6 +50,20 @@ function setupStartHandler(bot) {
       console.error('[Bot/Start] Ошибка:', error.message);
       await bot.sendMessage(chatId, '❌ Произошла ошибка. Попробуйте позже.');
     }
+  });
+
+  // Команда /app или /webapp или /login
+  bot.onText(/\/app|\/webapp|\/login|\/auth/, async (msg) => {
+    const webAppUrl = process.env.TELEGRAM_WEBAPP_URL || process.env.CLIENT_URL;
+    const keyboard = webAppUrl && webAppUrl.startsWith('https://')
+      ? { reply_markup: { inline_keyboard: [[{ text: '🚀 Открыть MorphAI Studio', web_app: { url: webAppUrl } }]] } }
+      : (webAppUrl ? { reply_markup: { inline_keyboard: [[{ text: '🚀 Открыть MorphAI', url: webAppUrl }]] } } : mainMenuKeyboard());
+
+    await bot.sendMessage(
+      msg.chat.id,
+      `✨ *MorphAI WebApp*\n\nВы авторизованы как ID: \`${msg.from.id}\`\nНажмите кнопку ниже для запуска веб-студии:`,
+      { parse_mode: 'Markdown', ...keyboard }
+    );
   });
 
   // Команда /help

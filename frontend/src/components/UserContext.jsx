@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { syncUser, getUserProfile, getTelegramUser } from '../services/api';
+import { syncUser, getUserProfile, getTelegramUser, telegramLogin } from '../services/api';
 
 const UserContext = createContext();
 
@@ -11,7 +11,19 @@ export const UserProvider = ({ children }) => {
   const [balance, setBalance] = useState(50);
   const [loading, setLoading] = useState(true);
 
-  // Синхронизация с сервером при старте
+  // Инициализация Telegram WebApp
+  useEffect(() => {
+    try {
+      if (window.Telegram?.WebApp) {
+        window.Telegram.WebApp.ready();
+        window.Telegram.WebApp.expand();
+      }
+    } catch (e) {
+      console.warn('[UserContext] WebApp init error:', e);
+    }
+  }, []);
+
+  // Синхронизация с сервером при старте (авто-регистрация без кликов)
   const refreshUser = useCallback(async () => {
     try {
       const user = await syncUser();
@@ -41,6 +53,24 @@ export const UserProvider = ({ children }) => {
     });
   };
 
+  // Ручная или быстрая авторизация через Telegram (для веб-версии)
+  const loginViaTelegram = async ({ username, telegram_id, first_name, photo_url }) => {
+    try {
+      setLoading(true);
+      const user = await telegramLogin({ username, telegram_id, first_name, photo_url });
+      if (user) {
+        setCurrentUser(user);
+        setBalance(user.balance ?? 50);
+        return user;
+      }
+    } catch (err) {
+      console.error('[UserContext] loginViaTelegram error:', err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <UserContext.Provider
       value={{
@@ -48,6 +78,7 @@ export const UserProvider = ({ children }) => {
         balance,
         setBalance: updateBalance,
         refreshUser,
+        loginViaTelegram,
         loading,
       }}
     >

@@ -1,168 +1,19 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Heart, Share2, Sparkles, LayoutGrid, Smartphone, X, Check, Camera, Search, Play } from 'lucide-react';
+import { Heart, Share2, Sparkles, LayoutGrid, Smartphone, X, Check, Camera, Search, Play, ArrowUpRight, Download } from 'lucide-react';
 import { useToast } from '../components/ToastContext';
 import { useLanguage } from '../components/LanguageContext';
+import { useUser } from '../components/UserContext';
+import { 
+  fetchPublicTemplates, 
+  fetchModels, 
+  executeRemix, 
+  checkRemixStatus, 
+  uploadAdminMedia 
+} from '../services/api';
 
-// База видео и артов от админки MorphAI с разделением на Фото и Видео
-const MASTER_FEED_DB = [
-  {
-    id: 'f1',
-    title: 'Neon Tokyo Cyberpunk',
-    type: 'video',
-    author: '@cyber_morph',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop',
-    model: 'Kling 1.5 HD',
-    cost: 10,
-    media: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=900&auto=format&fit=crop',
-    likesCount: 14200,
-    category: 'cyberpunk',
-    prompt: 'Киберпанк девушка в неоновом дожде, отражения мокрого асфальта, 8K Ultra HD, кинематографичный свет'
-  },
-  {
-    id: 'f2',
-    title: 'Old Money Yacht Club',
-    type: 'photo',
-    author: '@vogue_ai',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop',
-    model: 'Flux 1.1 Pro',
-    cost: 10,
-    media: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=900&auto=format&fit=crop',
-    likesCount: 9840,
-    category: 'fashion',
-    prompt: 'Винтажная пленочная эстетика 35mm, Монако, яхта, естественный теплый солнечный свет, 4k'
-  },
-  {
-    id: 'f3',
-    title: 'Chromatic Liquid Fashion',
-    type: 'video',
-    author: '@future_studio',
-    avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=200&auto=format&fit=crop',
-    model: 'Luma Dream Machine',
-    cost: 12,
-    media: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=900&auto=format&fit=crop',
-    likesCount: 22150,
-    category: 'futuristic',
-    prompt: 'Хромированный жидкий футуризм, переливающийся глянец, высокая мода, студийный свет'
-  },
-  {
-    id: 'f4',
-    title: 'Editorial B&W Portrait',
-    type: 'photo',
-    author: '@monochrome_pro',
-    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=200&auto=format&fit=crop',
-    model: 'Flux 1.1 Pro',
-    cost: 10,
-    media: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=900&auto=format&fit=crop',
-    likesCount: 18400,
-    category: 'portrait',
-    prompt: 'Глубокий черно-белый студийный портрет, контрастные тени, выразительный взгляд, 8k'
-  },
-  {
-    id: 'f5',
-    title: 'Parisian Golden Hour',
-    type: 'video',
-    author: '@elena_paris',
-    avatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=200&auto=format&fit=crop',
-    model: 'Hailuo AI',
-    cost: 12,
-    media: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=900&auto=format&fit=crop',
-    likesCount: 31200,
-    category: 'cinematic',
-    prompt: 'Прогулка по осеннему Парижу на закате, мягкие золотые блики, кинематографичный фокус'
-  },
-  {
-    id: 'f6',
-    title: '3D Pixar Dreamer',
-    type: 'photo',
-    author: '@pixar_magic',
-    avatar: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=200&auto=format&fit=crop',
-    model: 'DALL-E 3',
-    cost: 10,
-    media: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=900&auto=format&fit=crop',
-    likesCount: 16900,
-    category: 'animation',
-    prompt: '3D анимационный персонаж в стиле мультфильмов Pixar/Disney, выразительная мимика, volumetric lighting'
-  },
-  {
-    id: 'f7',
-    title: 'High Tech Sci-Fi Explorer',
-    type: 'video',
-    author: '@cosmos_ai',
-    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=200&auto=format&fit=crop',
-    model: 'Kling 1.5 HD',
-    cost: 10,
-    media: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=900&auto=format&fit=crop',
-    likesCount: 27800,
-    category: 'scifi',
-    prompt: 'Космический скафандр будущего, световые индикаторы, звезды и туманности на фоне'
-  },
-  {
-    id: 'f8',
-    title: 'Midnight Velvet Noir',
-    type: 'photo',
-    author: '@noir_fashion',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop',
-    model: 'Flux 1.1 Pro',
-    cost: 10,
-    media: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?q=80&w=900&auto=format&fit=crop',
-    likesCount: 12450,
-    category: 'fashion',
-    prompt: 'Бархатный вечерний наряд, ночной неоновый мегаполис, атмосферный боке, 8K'
-  },
-  {
-    id: 'f9',
-    title: 'Studio Ghibli Magic Valley',
-    type: 'photo',
-    author: '@anime_dream',
-    avatar: 'https://images.unsplash.com/photo-1535295972055-1c762f4483e5?q=80&w=200&auto=format&fit=crop',
-    model: 'Imagen 3 Pro',
-    cost: 10,
-    media: 'https://images.unsplash.com/photo-1535295972055-1c762f4483e5?q=80&w=900&auto=format&fit=crop',
-    likesCount: 19800,
-    category: 'animation',
-    prompt: 'Живописная зеленая долина, сказочный замок, облака Хаяо Миядзаки, акварельный стиль'
-  },
-  {
-    id: 'f10',
-    title: 'Forbes Business Executive',
-    type: 'photo',
-    author: '@forbes_visuals',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop',
-    model: 'Flux 1.1 Pro',
-    cost: 10,
-    media: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=900&auto=format&fit=crop',
-    likesCount: 15300,
-    category: 'portrait',
-    prompt: 'Премиальный деловой портрет руководителя, современный офис в небоскребе, уверенный взгляд'
-  },
-  {
-    id: 'f11',
-    title: 'Cyber Samurai 2099',
-    type: 'video',
-    author: '@blade_runner_ai',
-    avatar: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=200&auto=format&fit=crop',
-    model: 'Kling 1.5 HD',
-    cost: 12,
-    media: 'https://images.unsplash.com/photo-1563089145-599997674d42?q=80&w=900&auto=format&fit=crop',
-    likesCount: 24900,
-    category: 'cyberpunk',
-    prompt: 'Кибер-самурай с неоновым клинком на крыше ночного мегаполиса, дым и лазеры'
-  },
-  {
-    id: 'f12',
-    title: 'Vogue Haute Couture',
-    type: 'video',
-    author: '@milan_runway',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop',
-    model: 'Flux 1.1 Pro',
-    cost: 10,
-    media: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900&auto=format&fit=crop',
-    likesCount: 38200,
-    category: 'fashion',
-    prompt: 'Подиумный показ мод в Милане, струящиеся шелковые ткани, вспышки фотографов'
-  }
-];
+// База ленты загружается динамически из базы данных PostgreSQL через админку
+const MASTER_FEED_DB = [];
 
 // Умный алгоритм перемешивания без повторений (Fisher-Yates Shuffle)
 const shuffleNonRepeating = (array, lastItem = null) => {
@@ -183,8 +34,71 @@ const Feed = () => {
   const location = useLocation();
   const { showToast } = useToast();
   const { t, translateDynamic } = useLanguage();
+  const { currentUser, balance, setBalance, refreshUser } = useUser();
   // Режим: 'stream' (TikTok) или 'grid' (Сетка)
   const [viewMode, setViewMode] = useState('stream');
+
+  // Динамическая база с поддержкой постов из админки (строго из БД)
+  const [feedDatabase, setFeedDatabase] = useState([]);
+
+  // Загрузка живых шаблонов от админа и моделей для резолва обложек
+  useEffect(() => {
+    Promise.all([
+      fetchPublicTemplates(),
+      fetchModels().catch(() => [])
+    ]).then(([templatesData, modelsData]) => {
+      const modelsList = Array.isArray(modelsData) ? modelsData : [];
+
+      const resolveAvatar = (item) => {
+        if (item.model_avatar) return item.model_avatar;
+        const modelName = item.model_name || item.model || '';
+        if (!modelName) return 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop';
+        const lower = modelName.trim().toLowerCase();
+        let match = modelsList.find(m => m.name?.toLowerCase() === lower || m.id?.toLowerCase() === lower);
+        if (!match) {
+          for (const m of modelsList) {
+            if (Array.isArray(m.versions) && m.versions.some(v => v.name?.toLowerCase() === lower || v.id?.toLowerCase() === lower)) {
+              match = m;
+              break;
+            }
+          }
+        }
+        if (!match) {
+          match = modelsList.find(m => {
+            const mName = m.name?.toLowerCase() || '';
+            const mId = m.id?.toLowerCase() || '';
+            return (mName && lower.includes(mName)) || (mId && lower.includes(mId)) || (mName && mName.includes(lower));
+          });
+        }
+        return match?.preview_url || match?.preview || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop';
+      };
+
+      if (Array.isArray(templatesData)) {
+        const isVideoMedia = (url) => typeof url === 'string' && /\.(mp4|webm|mov|m4v)(\?.*)?$/i.test(url.trim());
+        const mapped = templatesData.map(item => {
+          const isVideo = isVideoMedia(item.video_url) || isVideoMedia(item.media_url) || (item.type === 'video' && isVideoMedia(item.media));
+          const mediaUrl = isVideo ? (item.video_url || item.media_url) : (item.thumb_url || item.preview_url || item.media_url || item.video_url || item.media);
+
+          return {
+            id: `tmpl_${item.id}`,
+            title: item.title || item.name || '',
+            type: isVideo ? 'video' : 'photo',
+            author: item.model_name || 'AI Model',
+            avatar: resolveAvatar(item),
+            model: item.model_name || 'Flux 1.1 Pro',
+            cost: item.cost !== undefined ? item.cost : 10,
+            media: mediaUrl,
+            videoUrl: isVideo ? mediaUrl : null,
+            likesCount: 14200 + (item.id * 311) % 15000,
+            category: item.category || 'all',
+            prompt: item.prompt || '',
+            targetFaceUrl: item.target_face_url || null
+          };
+        });
+        setFeedDatabase(mapped);
+      }
+    }).catch(err => console.error('Error loading feed templates:', err));
+  }, []);
 
   // Динамическая лента TikTok
   const [feedItems, setFeedItems] = useState([]);
@@ -194,7 +108,7 @@ const Feed = () => {
   useEffect(() => {
     if (location.state?.targetItemId) {
       const targetId = location.state.targetItemId;
-      const found = MASTER_FEED_DB.find(i => i.id === targetId) || location.state.item;
+      const found = feedDatabase.find(i => i.id === targetId) || location.state.item;
       if (found) {
         setViewMode('stream');
         setFeedItems(prev => {
@@ -204,7 +118,7 @@ const Feed = () => {
         showToast(`Открыт видео-шаблон «${found.title}»`, 'info');
       }
     }
-  }, [location.state]);
+  }, [location.state, feedDatabase]);
 
   // Состояние лайков
   const [likedItems, setLikedItems] = useState(() => {
@@ -223,9 +137,11 @@ const Feed = () => {
   // Шторка "Повторить стиль" (Remix)
   const [remixItem, setRemixItem] = useState(null);
   const [remixPhoto, setRemixPhoto] = useState(null);
+  const [remixFile, setRemixFile] = useState(null);
+  const [remixUploadedUrl, setRemixUploadedUrl] = useState(null);
   const [isRemixGenerating, setIsRemixGenerating] = useState(false);
   const [remixSuccess, setRemixSuccess] = useState(false);
-  const [remixTargetMode, setRemixTargetMode] = useState('face'); // 'face' | 'noface'
+  const [remixResultModal, setRemixResultModal] = useState(null);
   const fileInputRef = useRef(null);
 
   // Фильтрация и поиск в режиме Сетка и Поток
@@ -238,7 +154,7 @@ const Feed = () => {
   const activeStreamItems = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
     if (!q) return feedItems;
-    const matched = MASTER_FEED_DB.filter(item => 
+    const matched = feedDatabase.filter(item => 
       item.title.toLowerCase().includes(q) ||
       item.model.toLowerCase().includes(q) ||
       item.prompt.toLowerCase().includes(q) ||
@@ -248,11 +164,11 @@ const Feed = () => {
       ...item,
       feedKey: `${item.id}_stream_search_${idx}`
     }));
-  }, [searchQuery, feedItems]);
+  }, [searchQuery, feedItems, feedDatabase]);
 
   // Отфильтрованные карточки для Сетки
   const filteredGridItems = useMemo(() => {
-    return MASTER_FEED_DB.filter(item => {
+    return feedDatabase.filter(item => {
       const matchesType = gridFilterType === 'all' || item.type === gridFilterType;
       const q = searchQuery.toLowerCase().trim();
       const matchesQuery = !q || (
@@ -264,7 +180,7 @@ const Feed = () => {
       );
       return matchesType && matchesQuery;
     });
-  }, [gridFilterType, searchQuery]);
+  }, [gridFilterType, searchQuery, feedDatabase]);
 
   // Выбор элемента из сетки для открытия в TikTok-потоке
   const handleSelectGridItem = (item) => {
@@ -280,29 +196,31 @@ const Feed = () => {
     }, 50);
   };
 
-  // 1. Инициализация умной ленты рекомендаций при первом открытии
+  // 1. Инициализация умной ленты рекомендаций
   useEffect(() => {
-    const initialBatch = shuffleNonRepeating(MASTER_FEED_DB);
+    const initialBatch = shuffleNonRepeating(feedDatabase);
     // Добавляем уникальный instanceId для плавного бесконечного скролла
     const preparedBatch = initialBatch.map((item, idx) => ({
       ...item,
       feedKey: `${item.id}_${Date.now()}_${idx}`
     }));
     setFeedItems(preparedBatch);
-  }, []);
+  }, [feedDatabase]);
 
   // 2. Умная подгрузка следующей партии видео (TikTok Recommendation Engine)
   const appendRecommendedBatch = useCallback(() => {
+    if (!feedDatabase || feedDatabase.length === 0) return;
     setFeedItems(prev => {
+      if (!prev || prev.length === 0) return [];
       const lastItem = prev[prev.length - 1];
       
       // Анализируем предпочтения: какие категории пользователь лайкал больше всего
       const likedCategories = Object.keys(likedItems)
-        .map(id => MASTER_FEED_DB.find(m => m.id === id)?.category)
+        .map(id => feedDatabase.find(m => m.id === id)?.category)
         .filter(Boolean);
 
       // Генерируем новую перемешанную партию
-      let nextBatch = shuffleNonRepeating(MASTER_FEED_DB, lastItem);
+      let nextBatch = shuffleNonRepeating(feedDatabase, lastItem);
 
       // Если есть любимые категории, поднимаем их с вероятностью 40% (TikTok 80/20 принцип)
       if (likedCategories.length > 0) {
@@ -320,7 +238,7 @@ const Feed = () => {
 
       return [...prev, ...preparedNext];
     });
-  }, [likedItems]);
+  }, [likedItems, feedDatabase]);
 
   // 3. Отслеживание бесконечного скролла
   const handleScroll = (e) => {
@@ -399,18 +317,115 @@ const Feed = () => {
     }
   };
 
-  const handleExecuteRemix = (mode = 'face') => {
-    setRemixTargetMode(mode);
+  const handlePickRemixSelfie = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setRemixFile(file);
+    const localUrl = URL.createObjectURL(file);
+    setRemixPhoto(localUrl);
+
+    try {
+      const uploaded = await uploadAdminMedia(file, 'selfies');
+      if (uploaded?.url) {
+        setRemixUploadedUrl(uploaded.url);
+      }
+    } catch (err) {
+      console.warn('Background selfie upload warning:', err.message);
+    }
+  };
+
+  const handleExecuteRemix = async () => {
+    if (!remixItem) return;
+    const shootCost = Number(remixItem.cost) || 10;
+    if (balance < shootCost) {
+      showToast('Недостаточно кредитов для генерации! Пополните баланс.', 'error');
+      return;
+    }
+
     setIsRemixGenerating(true);
-    setTimeout(() => {
-      setIsRemixGenerating(false);
-      setRemixSuccess(true);
+
+    try {
+      let finalFaceUrl = remixUploadedUrl;
+      if (!finalFaceUrl && remixFile) {
+        showToast('Загрузка селфи в Cloudflare R2...', 'info');
+        const uploaded = await uploadAdminMedia(remixFile, 'selfies');
+        finalFaceUrl = uploaded?.url;
+        setRemixUploadedUrl(finalFaceUrl);
+      }
+
+      if (!finalFaceUrl) {
+        throw new Error('Пожалуйста, выберите селфи для замены');
+      }
+
+      showToast(`Запуск генерации через ${remixItem.model}...`, 'info');
+      const startRes = await executeRemix({
+        template_id: remixItem.id,
+        face_url: finalFaceUrl,
+        telegram_id: currentUser?.telegram_id || currentUser?.id,
+        user_id: currentUser?.id,
+        mode: 'face'
+      });
+
+      if (!startRes.success || !startRes.task_id) {
+        throw new Error(startRes.message || 'Ошибка запуска генерации');
+      }
+
+      if (startRes.balance !== undefined) {
+        setBalance(startRes.balance);
+      } else {
+        setBalance(b => Math.max(0, b - shootCost));
+      }
+
+      const taskId = startRes.task_id;
+      const modelUsed = startRes.model || remixItem.model;
+
+      // Поллинг статуса задачи в PiAPI / FaceSwap
+      const pollInterval = setInterval(async () => {
+        try {
+          const statusRes = await checkRemixStatus(taskId);
+          if (statusRes.status === 'completed' && statusRes.result_url) {
+            clearInterval(pollInterval);
+            setIsRemixGenerating(false);
+            setRemixSuccess(true);
+            showToast(`✨ Генерация через ${modelUsed} завершена!`, 'success');
+            if (refreshUser) refreshUser();
+
+            setRemixResultModal({
+              url: statusRes.result_url,
+              type: remixItem.type,
+              title: remixItem.title,
+              model: modelUsed
+            });
+
+            setTimeout(() => {
+              setRemixSuccess(false);
+              setRemixItem(null);
+              setRemixPhoto(null);
+              setRemixUploadedUrl(null);
+              setRemixFile(null);
+            }, 1000);
+          } else if (statusRes.status === 'failed') {
+            clearInterval(pollInterval);
+            setIsRemixGenerating(false);
+            showToast(statusRes.error_message || 'Ошибка обработки в нейросети', 'error');
+            if (refreshUser) refreshUser();
+          }
+        } catch (pollErr) {
+          console.warn('[Remix Poll]', pollErr.message);
+        }
+      }, 2500);
+
+      // Защитный таймаут на 3.5 минуты
       setTimeout(() => {
-        setRemixSuccess(false);
-        setRemixItem(null);
-        setRemixPhoto(null);
-      }, 1500);
-    }, 2000);
+        clearInterval(pollInterval);
+        setIsRemixGenerating(false);
+      }, 210000);
+
+    } catch (err) {
+      setIsRemixGenerating(false);
+      showToast(err.message || 'Ошибка генерации', 'error');
+    }
   };
 
   return (
@@ -495,10 +510,27 @@ const Feed = () => {
                   onClick={(e) => handleDoubleTap(e, item)}
                 >
                   {/* Фоновое видео/арт */}
-                  <div 
-                    className="tiktok-media-bg"
-                    style={{ backgroundImage: `url(${item.media})` }}
-                  />
+                  {(item.type === 'video' && item.videoUrl) ? (
+                    <video 
+                      src={item.videoUrl}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      className="tiktok-media-bg"
+                      style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+                    />
+                  ) : (
+                    <img 
+                      src={item.media}
+                      alt={item.title}
+                      className="tiktok-media-bg"
+                      style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+                      onError={(e) => {
+                        e.target.style.opacity = '0.5';
+                      }}
+                    />
+                  )}
 
                   {/* Плавный кинематографичный градиент затемнения */}
                   <div className="tiktok-vignette-overlay" />
@@ -558,7 +590,14 @@ const Feed = () => {
                   {/* ЛЕВЫЙ НИЖНИЙ БЛОК: ТОЛЬКО АВТОР И МОДЕЛЬ (ЧИСТО И БЕЗ ПРОМПТОВ) */}
                   <div className="tiktok-bottom-meta" onClick={(e) => e.stopPropagation()}>
                     <div className="meta-author-row">
-                      <img src={item.avatar} alt={item.author} className="meta-author-avatar" />
+                      <img 
+                        src={item.avatar} 
+                        alt={item.model || item.author} 
+                        className="meta-author-avatar" 
+                        onError={(e) => {
+                          e.target.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop';
+                        }}
+                      />
                       <div className="meta-text-col">
                         <span className="meta-author-handle">{item.title}</span>
                         <span className="meta-model-subtitle">{item.model}</span>
@@ -573,17 +612,19 @@ const Feed = () => {
               <div className="empty-search-orb">
                 <Search size={28} color="var(--color-primary-light)" />
               </div>
-              <h3>Видео не найдены</h3>
-              <p>По запросу «{searchQuery}» ничего не найдено</p>
-              <button 
-                className="btn-primary empty-search-btn"
-                onClick={() => {
-                  setSearchQuery('');
-                  setIsStreamSearchOpen(false);
-                }}
-              >
-                Сбросить поиск
-              </button>
+              <h3>{searchQuery ? 'Видео не найдены' : 'В ленте пока нет публикаций'}</h3>
+              <p>{searchQuery ? `По запросу «${searchQuery}» ничего не найдено` : 'Администратор может добавить новые посты через панель управления.'}</p>
+              {searchQuery && (
+                <button 
+                  className="btn-primary empty-search-btn"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setIsStreamSearchOpen(false);
+                  }}
+                >
+                  Сбросить поиск
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -636,10 +677,22 @@ const Feed = () => {
                     className="feed-grid-item"
                     onClick={() => handleSelectGridItem(item)}
                   >
-                    <div 
-                      className="grid-item-thumb" 
-                      style={{ backgroundImage: `url(${item.media})` }}
-                    >
+                    <div className="grid-item-thumb">
+                      {(item.type === 'video' && item.videoUrl) ? (
+                        <video 
+                          src={item.videoUrl} 
+                          muted 
+                          loop 
+                          playsInline 
+                          autoPlay 
+                          className="grid-item-thumb-video" 
+                        />
+                      ) : (
+                        <div 
+                          className="grid-item-thumb-bg" 
+                          style={{ backgroundImage: `url(${item.media || item.thumb_url})` }} 
+                        />
+                      )}
                       {/* Бейдж типа медиа (Видео или Фото) */}
                       <span className={`grid-media-type-badge ${item.type}`}>
                         {item.type === 'video' ? (
@@ -691,17 +744,19 @@ const Feed = () => {
               <div className="empty-search-orb">
                 <Search size={26} color="var(--color-primary-light)" />
               </div>
-              <h4>Ничего не найдено</h4>
-              <p>По запросу «{searchQuery}» совпадений нет.</p>
-              <button 
-                className="btn-primary empty-search-btn"
-                onClick={() => {
-                  setSearchQuery('');
-                  setGridFilterType('all');
-                }}
-              >
-                Сбросить поиск
-              </button>
+              <h4>{searchQuery ? 'Ничего не найдено' : 'В ленте пока нет публикаций'}</h4>
+              <p>{searchQuery ? `По запросу «${searchQuery}» совпадений нет.` : 'Администратор может добавить новые посты через панель управления.'}</p>
+              {searchQuery && (
+                <button 
+                  className="btn-primary empty-search-btn"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setGridFilterType('all');
+                  }}
+                >
+                  Сбросить поиск
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -767,10 +822,7 @@ const Feed = () => {
                   ref={fileInputRef}
                   type="file" 
                   accept="image/*" 
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) setRemixPhoto(URL.createObjectURL(file));
-                  }}
+                  onChange={handlePickRemixSelfie}
                   style={{ display: 'none' }}
                 />
 
@@ -779,7 +831,7 @@ const Feed = () => {
                     className="morph-slot-thumb user-face-thumb"
                     style={{ backgroundImage: `url(${remixPhoto})` }}
                   >
-                    <span className="morph-slot-badge ready">✓ Ваше лицо</span>
+                    <span className="morph-slot-badge ready">Ваше лицо</span>
                     <button 
                       className="morph-change-face-btn" 
                       onClick={(e) => {
@@ -800,31 +852,53 @@ const Feed = () => {
                   </div>
                 )}
                 <span className="morph-slot-label">
-                  {remixPhoto ? 'Лицо загружено' : 'Для переноса черт'}
+                  {remixPhoto ? 'Селфи выбрано' : 'Для переноса лица'}
                 </span>
               </div>
             </div>
 
-            {/* ДВА ЧЁТКИХ СЦЕНАРИЯ ДЕЙСТВИЯ (БЕЗ ТЕКСТА ПРОМПТА) */}
+            {/* Подсказка о Главном Герое, если он задан админом */}
+            {remixItem.targetFaceUrl && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '7px 12px',
+                background: 'rgba(229, 185, 92, 0.08)',
+                border: '1px solid rgba(229, 185, 92, 0.25)',
+                borderRadius: '10px',
+                marginBottom: '12px'
+              }}>
+                <img 
+                  src={remixItem.targetFaceUrl} 
+                  alt="ГГ" 
+                  style={{ width: '22px', height: '22px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #e5b95c' }} 
+                />
+                <span style={{ fontSize: '0.75rem', color: '#e5b95c', fontWeight: 500 }}>
+                  Главный Герой задан: нейросеть заменит именно этого персонажа в видео/фото
+                </span>
+              </div>
+            )}
+
+            {/* ГЛАВНОЕ ДЕЙСТВИЕ: ГЕНЕРАЦИЯ ЧЕРЕЗ МОДЕЛЬ ШАБЛОНА */}
             <div className="remix-actions-cluster">
-              {/* Главный сценарий: Создать со своим лицом */}
               <button 
                 className="btn-primary remix-primary-btn"
                 onClick={() => {
                   if (!remixPhoto) {
                     fileInputRef.current?.click();
                   } else {
-                    handleExecuteRemix('face');
+                    handleExecuteRemix();
                   }
                 }}
                 disabled={isRemixGenerating || remixSuccess}
               >
-                {isRemixGenerating && remixTargetMode === 'face' ? (
+                {isRemixGenerating ? (
                   <>
                     <div className="spinner-mini" />
-                    <span>Перенос лица в стиль...</span>
+                    <span>Генерация через {remixItem.model}...</span>
                   </>
-                ) : remixSuccess && remixTargetMode === 'face' ? (
+                ) : remixSuccess ? (
                   <>
                     <Check size={18} color="#4ade80" />
                     <span style={{ color: '#4ade80' }}>Шедевр готов! Сохранен в профиль</span>
@@ -832,32 +906,63 @@ const Feed = () => {
                 ) : (
                   <>
                     <Sparkles size={17} />
-                    <span>{remixPhoto ? `Создать с моим лицом (${remixItem.cost} CR)` : `Загрузить селфи и создать (${remixItem.cost} CR)`}</span>
+                    <span>{remixPhoto ? `Создать через ${remixItem.model} (${remixItem.cost} CR)` : `Загрузить селфи и создать через ${remixItem.model}`}</span>
                   </>
-                )}
-              </button>
-
-              {/* Альтернативный сценарий: Создать похожий арт без лица */}
-              <button 
-                className="remix-secondary-btn"
-                onClick={() => handleExecuteRemix('noface')}
-                disabled={isRemixGenerating || remixSuccess}
-              >
-                {isRemixGenerating && remixTargetMode === 'noface' ? (
-                  <>
-                    <div className="spinner-mini" />
-                    <span>Генерация нового арта...</span>
-                  </>
-                ) : remixSuccess && remixTargetMode === 'noface' ? (
-                  <>
-                    <Check size={18} color="#4ade80" />
-                    <span style={{ color: '#4ade80' }}>Арт готов! Сохранен в профиль</span>
-                  </>
-                ) : (
-                  <span>Создать новый арт в этом стиле ({remixItem.cost} CR)</span>
                 )}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* МОДАЛКА ГОТОВОГО РЕЗУЛЬТАТА REMIX */}
+      {remixResultModal && (
+        <div className="photoshoot-modal-overlay" onClick={() => setRemixResultModal(null)}>
+          <div className="photoshoot-modal-header" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-title-info">
+              <h3>Готово! Результат через {remixResultModal.model}</h3>
+              <span className="modal-title-sub">{remixResultModal.title}</span>
+            </div>
+            <button 
+              className="photoshoot-modal-close"
+              onClick={() => setRemixResultModal(null)}
+            >
+              <X size={22} />
+            </button>
+          </div>
+
+          <div className="photoshoot-modal-gallery" onClick={(e) => e.stopPropagation()} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '16px' }}>
+            {remixResultModal.type === 'video' || /\.(mp4|webm|mov)(\?.*)?$/i.test(remixResultModal.url) ? (
+              <video 
+                src={remixResultModal.url} 
+                controls 
+                autoPlay 
+                playsInline 
+                loop
+                style={{ maxHeight: '65vh', maxWidth: '100%', borderRadius: '16px', boxShadow: '0 8px 30px rgba(0,0,0,0.8)' }} 
+              />
+            ) : (
+              <img 
+                src={remixResultModal.url} 
+                alt="Result" 
+                style={{ maxHeight: '65vh', maxWidth: '100%', borderRadius: '16px', objectFit: 'contain', boxShadow: '0 8px 30px rgba(0,0,0,0.8)' }} 
+              />
+            )}
+          </div>
+
+          <div className="photoshoot-modal-footer" onClick={(e) => e.stopPropagation()}>
+            <a 
+              href={remixResultModal.url} 
+              download={`morphai_remix_${Date.now()}.${remixResultModal.type === 'video' ? 'mp4' : 'jpg'}`}
+              target="_blank"
+              rel="noreferrer"
+              className="btn-primary photoshoot-download-all-btn"
+              style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+              onClick={() => showToast('Файл скачивается...', 'success')}
+            >
+              <Download size={18} />
+              <span>Скачать в максимальном качестве</span>
+            </a>
           </div>
         </div>
       )}

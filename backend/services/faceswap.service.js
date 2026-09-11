@@ -32,21 +32,25 @@ class FaceSwapService {
    * @param {object} params
    * @param {string} params.targetUrl — URL эталонного видео/фото (из шаблона)
    * @param {string} params.faceUrl — URL селфи пользователя
+   * @param {string} [params.targetFaceUrl] — URL лица Главного Героя (ГГ), заданного админом
    * @param {string} [params.targetType='video'] — 'video' | 'photo'
    * @returns {Promise<{taskId: string, status: string}>}
    */
-  async generate({ targetUrl, faceUrl, targetType = 'video' }) {
+  async generate({ targetUrl, faceUrl, targetFaceUrl, targetType = 'video' }) {
     try {
       const payload = {
         target_image: targetUrl,
         swap_image: faceUrl,
       };
 
-      // Для видео используем отдельный эндпоинт
-      const endpoint = targetType === 'video'
-        ? '/api/face_swap/v1/async'
-        : '/api/face_swap/v1/async';
+      // Если админ задал конкретное лицо Главного Героя (ГГ), передаем его для точной замены
+      if (targetFaceUrl) {
+        payload.target_face = targetFaceUrl;
+        payload.source_face = targetFaceUrl;
+      }
 
+      // Для видео и фото используем асинхронный эндпоинт FaceSwap
+      const endpoint = '/api/face_swap/v1/async';
       const response = await this.client.post(endpoint, payload);
 
       const data = response.data;

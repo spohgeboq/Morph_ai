@@ -27,14 +27,14 @@ const AI_MODELS = {
     provider: 'piapi',
     cost: 12,
     preview: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=600&auto=format&fit=crop&q=80',
-    tags: ['Видео 1080p', 'Кино-физика'],
+    tags: ['1080p', 'Кино'],
     desc: 'Плавные кинематографичные видео и реалистичная физика движения',
     defaultDuration: 6,
     allowDurationChoice: false,
     versions: [
-      { id: 'kling-ultra', name: 'Kling 3.0 (Ultra)', slug: 'kling-video/v3/pro', cost: 16, tier: 'high', tierLabel: 'Максимум' },
-      { id: 'kling-std', name: 'Kling 1.5 HD (Standard)', slug: 'kling-video/v1.5/pro', cost: 12, tier: 'medium', tierLabel: 'Стандарт' },
-      { id: 'kling-lite', name: 'Kling Fast (Lite)', slug: 'kling-video/v1.5/fast', cost: 8, tier: 'lite', tierLabel: 'Лайт' },
+      { id: 'kling-ultra', name: 'Kling 3.0', slug: 'kling-video/v3/pro', cost: 16 },
+      { id: 'kling-std', name: 'Kling 1.5 HD', slug: 'kling-video/v1.5/pro', cost: 12 },
+      { id: 'kling-lite', name: 'Kling Fast', slug: 'kling-video/v1.5/fast', cost: 8 },
     ],
     aspectRatios: ['16:9', '9:16', '1:1'],
     samplePrompts: [
@@ -44,19 +44,19 @@ const AI_MODELS = {
   },
   'hailuo': {
     id: 'hailuo',
-    name: 'Hailuo (MiniMax)',
+    name: 'Hailuo',
     category: 'video',
     provider: 'piapi',
     cost: 14,
     preview: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=600&auto=format&fit=crop&q=80',
-    tags: ['Реалистичное движение', 'HD'],
+    tags: ['Реализм', 'HD'],
     desc: 'Генерация сверхреалистичных сцен с естественной пластикой людей и природы',
     defaultDuration: 6,
     allowDurationChoice: false,
     versions: [
-      { id: 'hailuo-ultra', name: 'Hailuo H3 (Ultra)', slug: 'minimax-hailuo-h3', cost: 16, tier: 'high', tierLabel: 'Максимум' },
-      { id: 'hailuo-std', name: 'Hailuo H2 (Standard)', slug: 'minimax-hailuo', cost: 13, tier: 'medium', tierLabel: 'Стандарт' },
-      { id: 'hailuo-lite', name: 'Hailuo Lite (Fast)', slug: 'minimax-hailuo-lite', cost: 9, tier: 'lite', tierLabel: 'Лайт' },
+      { id: 'hailuo-ultra', name: 'Hailuo H3', slug: 'minimax-hailuo-h3', cost: 16 },
+      { id: 'hailuo-std', name: 'Hailuo H2', slug: 'minimax-hailuo', cost: 13 },
+      { id: 'hailuo-lite', name: 'Hailuo Lite', slug: 'minimax-hailuo-lite', cost: 9 },
     ],
     aspectRatios: ['16:9', '9:16', '1:1'],
     samplePrompts: [
@@ -64,31 +64,9 @@ const AI_MODELS = {
       'Золотой орел парит над горным хребтом в лучах утреннего солнца'
     ]
   },
-  'luma-dream': {
-    id: 'luma-dream',
-    name: 'Luma Dream Machine',
-    category: 'video',
-    provider: 'piapi',
-    cost: 10,
-    preview: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&auto=format&fit=crop&q=80',
-    tags: ['Оживление фото', 'Динамика'],
-    desc: 'Превращает статичные кадры в динамичные видеоролики с плавными переходами',
-    defaultDuration: 6,
-    allowDurationChoice: false,
-    versions: [
-      { id: 'luma-ultra', name: 'Dream 1.5 HD (Ultra)', slug: 'luma-1-5', cost: 14, tier: 'high', tierLabel: 'Максимум' },
-      { id: 'luma-std', name: 'Dream 1.0 (Standard)', slug: 'luma-1-0', cost: 10, tier: 'medium', tierLabel: 'Стандарт' },
-      { id: 'luma-lite', name: 'Dream Turbo (Lite)', slug: 'luma-turbo', cost: 7, tier: 'lite', tierLabel: 'Лайт' },
-    ],
-    aspectRatios: ['16:9', '9:16', '1:1'],
-    samplePrompts: [
-      'Оживление портрета: легкая улыбка и колыхание волос от ветра',
-      'Оживление фото пейзажа с движущимися облаками и рекой'
-    ]
-  },
   'runway-gen4': {
     id: 'runway-gen4',
-    name: 'Runway',
+    name: 'GenAi',
     category: 'video',
     provider: 'runway',
     cost: 16,
@@ -98,11 +76,11 @@ const AI_MODELS = {
     defaultDuration: 6,
     allowDurationChoice: false,
     versions: [
-      { id: 'runway-ultra', name: 'Runway Gen-4 (Ultra)', slug: 'gen4_turbo', cost: 18, tier: 'high', tierLabel: 'Максимум' },
-      { id: 'runway-std', name: 'Runway Gen-4 Turbo (Standard)', slug: 'gen4_turbo', cost: 15, tier: 'medium', tierLabel: 'Стандарт' },
-      { id: 'runway-lite', name: 'Runway Gen-3 (Lite)', slug: 'gen4_turbo', cost: 10, tier: 'lite', tierLabel: 'Лайт' },
+      { id: 'runway-ultra', name: 'Runway Gen-4', slug: 'gen4_turbo', cost: 18 },
+      { id: 'runway-std', name: 'Runway Gen-4 Turbo', slug: 'gen4_turbo', cost: 15 },
+      { id: 'runway-lite', name: 'Runway Gen-3', slug: 'gen4_turbo', cost: 10 },
     ],
-    aspectRatios: ['16:9', '9:16', '1:1'],
+    aspectRatios: ['16:9', '9:16'],
     samplePrompts: [
       'Замедленный взрыв неоновых кристаллов в темноте, осколки света',
       'Кинематографичная сцена погони в футуристичном мегаполисе'
@@ -115,20 +93,42 @@ const AI_MODELS = {
     provider: 'piapi',
     cost: 12,
     preview: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600&auto=format&fit=crop&q=80',
-    tags: ['Гибкое время', 'Анимация'],
+    tags: ['6–15 сек', 'Анимация'],
     desc: 'Видеомодель с гибким интерактивным выбором длительности (6, 10 или 15 сек)',
     defaultDuration: 6,
     allowDurationChoice: true,
     durationOptions: [6, 10, 15],
     versions: [
-      { id: 'seedance-ultra', name: 'Seedance 2.5 (Ultra)', slug: 'seedance-2.5', cost: 16, tier: 'high', tierLabel: 'Максимум' },
-      { id: 'seedance-std', name: 'Seedance 2.0 (Standard)', slug: 'seedance', cost: 12, tier: 'medium', tierLabel: 'Стандарт' },
-      { id: 'seedance-lite', name: 'Seedance Lite (Fast)', slug: 'seedance-lite', cost: 8, tier: 'lite', tierLabel: 'Лайт' },
+      { id: 'seedance-ultra', name: 'Seedance 2.5', slug: 'seedance-2.5', cost: 16 },
+      { id: 'seedance-std', name: 'Seedance 2.0', slug: 'seedance', cost: 12 },
+      { id: 'seedance-lite', name: 'Seedance Lite', slug: 'seedance-lite', cost: 8 },
     ],
     aspectRatios: ['16:9', '9:16', '1:1'],
     samplePrompts: [
       'Красочный танец в неоновом дожде под электронную музыку',
       'Анимированная сцена превращения бабочки в созвездие звезд'
+    ]
+  },
+  'veo-3-1': {
+    id: 'veo-3-1',
+    name: 'Veo 3.1',
+    category: 'video',
+    provider: 'runway',
+    cost: 16,
+    preview: 'https://images.unsplash.com/photo-1536240478700-b869070f9279?w=600&auto=format&fit=crop&q=80',
+    tags: ['Google DeepMind', '4K Кино'],
+    desc: 'Передовая кинематографичная видеомодель от Google с высокой детализацией',
+    defaultDuration: 4,
+    allowDurationChoice: false,
+    versions: [
+      { id: 'veo-ultra', name: 'Veo 3.1 Pro', slug: 'veo3.1', cost: 18 },
+      { id: 'veo-std', name: 'Veo 3.1 Standard', slug: 'veo3.1', cost: 16 },
+      { id: 'veo-lite', name: 'Veo 3.1 Fast', slug: 'veo3.1', cost: 12 },
+    ],
+    aspectRatios: ['16:9', '9:16'],
+    samplePrompts: [
+      'Человек идет по пляжу в ветреную погоду, золотой закат, кинематографичный свет',
+      'Замедленный кинематографичный пролет камеры над неоновым мегаполисом'
     ]
   },
 
@@ -142,12 +142,12 @@ const AI_MODELS = {
     provider: 'piapi',
     cost: 10,
     preview: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&auto=format&fit=crop&q=80',
-    tags: ['Фото 8K', 'Портреты'],
+    tags: ['8K Фото', 'Портрет'],
     desc: 'Гиперреалистичные портреты и фото студийного качества',
     versions: [
-      { id: 'flux-ultra', name: 'Flux 1.1 Pro (Ultra)', slug: 'flux-dev', cost: 12, tier: 'high', tierLabel: 'Максимум' },
-      { id: 'flux-std', name: 'Flux Dev (Standard)', slug: 'flux-dev', cost: 8, tier: 'medium', tierLabel: 'Стандарт' },
-      { id: 'flux-lite', name: 'Flux Schnell (Lite)', slug: 'flux-schnell', cost: 5, tier: 'lite', tierLabel: 'Лайт' },
+      { id: 'flux-ultra', name: 'Flux 1.1 Pro', slug: 'flux-dev', cost: 12 },
+      { id: 'flux-std', name: 'Flux Dev', slug: 'flux-dev', cost: 8 },
+      { id: 'flux-lite', name: 'Flux Schnell', slug: 'flux-schnell', cost: 5 },
     ],
     aspectRatios: ['1:1', '9:16', '16:9', '4:5'],
     samplePrompts: [
@@ -162,12 +162,12 @@ const AI_MODELS = {
     provider: 'piapi',
     cost: 10,
     preview: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600&auto=format&fit=crop&q=80',
-    tags: ['Замена лица', 'Реализм'],
+    tags: ['Замена лица', '4K'],
     desc: 'Высокоточная замена лица на фото и шаблонах с сохранением мимики',
     versions: [
-      { id: 'fs-ultra', name: 'Face Swap Ultra 4K', slug: 'face-swap', cost: 14, tier: 'high', tierLabel: 'Максимум' },
-      { id: 'fs-std', name: 'Face Swap HD Standard', slug: 'face-swap', cost: 10, tier: 'medium', tierLabel: 'Стандарт' },
-      { id: 'fs-lite', name: 'Face Swap Fast Lite', slug: 'face-swap', cost: 6, tier: 'lite', tierLabel: 'Лайт' },
+      { id: 'fs-ultra', name: 'Face Swap Ultra 4K', slug: 'face-swap', cost: 14 },
+      { id: 'fs-std', name: 'Face Swap HD', slug: 'face-swap', cost: 10 },
+      { id: 'fs-lite', name: 'Face Swap Lite', slug: 'face-swap', cost: 6 },
     ],
     aspectRatios: ['1:1', '9:16', '16:9'],
     samplePrompts: [
@@ -175,64 +175,24 @@ const AI_MODELS = {
       'Создание фотореалистичного аватара'
     ]
   },
-  'dall-e-3': {
-    id: 'dall-e-3',
-    name: 'DALL-E 3',
+  'gpt-image': {
+    id: 'gpt-image',
+    name: 'GPT Image',
     category: 'photo',
     provider: 'piapi',
-    cost: 8,
-    preview: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=600&auto=format&fit=crop&q=80',
-    tags: ['Иллюстрации', 'Сюрреализм'],
-    desc: 'Точное следование сложным подсказкам и яркая художественная визуализация',
+    cost: 10,
+    preview: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80',
+    tags: ['OpenAI', 'Фотореализм'],
+    desc: 'Новейшая генерация фотореалистичных изображений студийного качества и сложных композиций',
     versions: [
-      { id: 'dall-e-ultra', name: 'DALL-E 3 HD (Ultra)', slug: 'flux-dev', cost: 10, tier: 'high', tierLabel: 'Максимум' },
-      { id: 'dall-e-std', name: 'DALL-E 3 (Standard)', slug: 'flux-dev', cost: 8, tier: 'medium', tierLabel: 'Стандарт' },
-      { id: 'dall-e-lite', name: 'DALL-E 3 Fast (Lite)', slug: 'flux-schnell', cost: 5, tier: 'lite', tierLabel: 'Лайт' },
-    ],
-    aspectRatios: ['1:1', '16:9', '9:16'],
-    samplePrompts: [
-      'Абстрактная картина маслом в стиле кубизма, яркие контрасты',
-      'Футуристический город в стеклянном шаре среди пустыни'
-    ]
-  },
-  'imagen-3': {
-    id: 'imagen-3',
-    name: 'Imagen 3',
-    category: 'photo',
-    provider: 'piapi',
-    cost: 8,
-    preview: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600&auto=format&fit=crop&q=80',
-    tags: ['Google Фото', 'Фотореализм'],
-    desc: 'Передовая модель генерации изображений от Google с глубокой детализацией',
-    versions: [
-      { id: 'imagen-ultra', name: 'Imagen 3 (Ultra)', slug: 'flux-dev', cost: 10, tier: 'high', tierLabel: 'Максимум' },
-      { id: 'imagen-std', name: 'Imagen 3 (Standard)', slug: 'flux-dev', cost: 8, tier: 'medium', tierLabel: 'Стандарт' },
-      { id: 'imagen-lite', name: 'Imagen 3 Fast (Lite)', slug: 'flux-schnell', cost: 5, tier: 'lite', tierLabel: 'Лайт' },
+      { id: 'gpt-image-ultra', name: 'GPT Image 2', slug: 'gpt-image-2', cost: 12 },
+      { id: 'gpt-image-std', name: 'GPT Image 1.5', slug: 'gpt-image-1.5', cost: 8 },
+      { id: 'gpt-image-lite', name: 'GPT Image 1', slug: 'gpt-image-1', cost: 5 },
     ],
     aspectRatios: ['1:1', '16:9', '9:16', '4:5'],
     samplePrompts: [
-      'Кинематографичный кадр из исторического фильма при естественном свете',
-      'Макросъемка капли росы на лепестке экзотического цветка'
-    ]
-  },
-  'wan-image': {
-    id: 'wan-image',
-    name: 'Wan Image',
-    category: 'photo',
-    provider: 'piapi',
-    cost: 6,
-    preview: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
-    tags: ['Концепт-арт', 'Фэнтези'],
-    desc: 'Создание атмосферных пейзажей, фэнтези-артов и дизайн-иллюстраций',
-    versions: [
-      { id: 'wan-ultra', name: 'Wan Image Pro (Ultra)', slug: 'flux-dev', cost: 9, tier: 'high', tierLabel: 'Максимум' },
-      { id: 'wan-std', name: 'Wan Image (Standard)', slug: 'flux-dev', cost: 6, tier: 'medium', tierLabel: 'Стандарт' },
-      { id: 'wan-lite', name: 'Wan Image Fast (Lite)', slug: 'flux-schnell', cost: 4, tier: 'lite', tierLabel: 'Лайт' },
-    ],
-    aspectRatios: ['9:16', '1:1', '16:9', '4:5'],
-    samplePrompts: [
-      'Заброшенный древний замок среди туманных гор, эпический свет',
-      'Парящие острова в небе на фоне заката'
+      'Рекламное фото вязаного кардигана на хромированном стуле в мягком студийном свете',
+      'Эстетичный студийный портрет крупным планом с мягким кинематографичным светом'
     ]
   },
   'nano-banana': {
@@ -242,14 +202,14 @@ const AI_MODELS = {
     provider: 'piapi',
     cost: 8,
     preview: 'https://images.unsplash.com/photo-1563089145-599997674d42?w=600&auto=format&fit=crop&q=80',
-    tags: ['Эксклюзив', 'Digital Арт'],
+    tags: ['Эксклюзив', 'Digital'],
     desc: 'Креативная генерация ярких digital-артов и дизайн-иллюстраций',
     versions: [
-      { id: 'nano-ultra', name: 'Nano Pro 2.0 (Ultra)', slug: 'flux-dev', cost: 10, tier: 'high', tierLabel: 'Максимум' },
-      { id: 'nano-std', name: 'Nano Turbo (Standard)', slug: 'flux-dev', cost: 8, tier: 'medium', tierLabel: 'Стандарт' },
-      { id: 'nano-lite', name: 'Nano Flash (Lite)', slug: 'flux-schnell', cost: 5, tier: 'lite', tierLabel: 'Лайт' },
+      { id: 'nano-ultra', name: 'Nano Banana 2', slug: 'nano-banana-2', cost: 10 },
+      { id: 'nano-std', name: 'Nano Banana 1 Pro', slug: 'nano-banana-1-pro', cost: 8 },
+      { id: 'nano-lite', name: 'Nano Banana 1', slug: 'nano-banana-1', cost: 5 },
     ],
-    aspectRatios: ['9:16', '1:1', '16:9', '4:5'],
+    aspectRatios: ['1:1', '9:16', '16:9', '4:5'],
     samplePrompts: [
       'Яркий неоновый поп-арт с фруктами и космическими элементами',
       'Футуристический дизайн персонажа в стиле киберпанк'
@@ -262,12 +222,12 @@ const AI_MODELS = {
     provider: 'piapi',
     cost: 6,
     preview: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=600&auto=format&fit=crop&q=80',
-    tags: ['Турбо', '3D Персонажи'],
+    tags: ['3D Аватар', 'Турбо'],
     desc: 'Сверхбыстрая генерация концепт-артов и мультяшных аватаров',
     versions: [
-      { id: 'sd-ultra', name: 'Seedream 4.0 (Ultra)', slug: 'flux-dev', cost: 8, tier: 'high', tierLabel: 'Максимум' },
-      { id: 'sd-std', name: 'Seedream 3.5 (Standard)', slug: 'flux-dev', cost: 6, tier: 'medium', tierLabel: 'Стандарт' },
-      { id: 'sd-lite', name: 'Seedream Lite (Fast)', slug: 'flux-schnell', cost: 4, tier: 'lite', tierLabel: 'Лайт' },
+      { id: 'sd-ultra', name: 'Seedream 5.0 Pro', slug: 'seedream-5-pro', cost: 8 },
+      { id: 'sd-std', name: 'Seedream 5.0 Lite', slug: 'seedream-5-lite', cost: 6 },
+      { id: 'sd-lite', name: 'Seedream 4.0', slug: 'seedream-4-0', cost: 4 },
     ],
     aspectRatios: ['1:1', '9:16', '16:9'],
     samplePrompts: [
@@ -277,95 +237,110 @@ const AI_MODELS = {
   },
 
   // =============================================
-  // 3. ТЕКСТОВЫЕ МОДЕЛИ (OpenRouter) — ПОСЛЕДНЕЕ МЕСТО
+  // 3. ИИ-СКАЗИТЕЛИ И МАСТЕРА ИСТОРИЙ (OpenRouter)
   // =============================================
   'gpt-4o': {
     id: 'gpt-4o',
-    name: 'OpenAI GPT',
+    name: 'GPT Сказки',
     category: 'text',
     provider: 'openrouter',
     cost: 3,
-    preview: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80',
-    tags: ['Копирайтинг', 'Идеи'],
-    desc: 'Написание вирусных постов, сценариев для Reels и креативных текстов',
+    roleTitle: 'Сказки',
+    preview: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
+    tags: ['Сказки', 'Притчи'],
+    desc: 'Добрые сказки на ночь, волшебные миры и поучительные притчи со смыслом',
     versions: [
-      { id: 'gpt-4o-ultra', name: 'GPT-4o Omni (Ultra)', slug: 'openai/gpt-4o', cost: 4, tier: 'high', tierLabel: 'Максимум' },
-      { id: 'gpt-4o-std', name: 'GPT-4o (Standard)', slug: 'openai/gpt-4o', cost: 3, tier: 'medium', tierLabel: 'Стандарт' },
-      { id: 'gpt-4o-mini', name: 'GPT-4o Mini (Lite)', slug: 'openai/gpt-4o-mini', cost: 1, tier: 'lite', tierLabel: 'Лайт' },
+      { id: 'gpt-4o-ultra', name: 'GPT-4o', slug: 'openai/gpt-4o', cost: 4 },
+      { id: 'gpt-4o-std', name: 'GPT-4o Standard', slug: 'openai/gpt-4o', cost: 3 },
+      { id: 'gpt-4o-mini', name: 'GPT-4o Mini', slug: 'openai/gpt-4o-mini', cost: 1 },
     ],
     aspectRatios: [],
     samplePrompts: [
-      'Напиши 5 цепляющих сценариев для Reels про нейросети',
-      'Придумай концепцию продающего поста для запуска продукта'
+      'Сказка о маленьком маячнике, который зажигал упавшие звезды',
+      'Добрая притча о старинных часах, считавших только счастливые мгновения'
     ]
   },
   'claude-sonnet': {
     id: 'claude-sonnet',
-    name: 'Claude',
+    name: 'Claude Мистика',
     category: 'text',
     provider: 'openrouter',
     cost: 3,
-    preview: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&auto=format&fit=crop&q=80',
-    tags: ['Сценарии', 'Логика'],
-    desc: 'Глубокие тексты, статьи, драматургия и сложный сторителлинг',
+    roleTitle: 'Мистика',
+    preview: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=600&auto=format&fit=crop&q=80',
+    tags: ['Мистика', 'Тайны'],
+    desc: 'Загадочные мистические истории, городские легенды, саспенс и детективные тайны',
     versions: [
-      { id: 'claude-ultra', name: 'Claude 3.5 Sonnet (Ultra)', slug: 'anthropic/claude-3.5-sonnet', cost: 4, tier: 'high', tierLabel: 'Максимум' },
-      { id: 'claude-std', name: 'Claude 3.5 Haiku (Standard)', slug: 'anthropic/claude-3.5-haiku', cost: 2, tier: 'medium', tierLabel: 'Стандарт' },
-      { id: 'claude-lite', name: 'Claude 3 Haiku (Lite)', slug: 'anthropic/claude-3-haiku', cost: 1, tier: 'lite', tierLabel: 'Лайт' },
+      { id: 'claude-ultra', name: 'Claude Sonnet', slug: 'anthropic/claude-sonnet-4', cost: 4 },
+      { id: 'claude-std', name: 'Claude Haiku', slug: 'anthropic/claude-3-haiku', cost: 2 },
+      { id: 'claude-lite', name: 'Claude Fast', slug: 'anthropic/claude-3-haiku', cost: 1 },
     ],
     aspectRatios: [],
     samplePrompts: [
-      'Напиши сценарий для короткометражного фантастического фильма',
-      'Создай подробный контент-план на 30 дней для личного бренда'
+      'Тайна заброшенной станции метро, куда поезда приходят лишь в полнолуние',
+      'История старинного антикварного зеркала, отражающего события прошлого'
     ]
   },
   'gemini-pro': {
     id: 'gemini-pro',
-    name: 'Gemini Pro',
+    name: 'Gemini Sci-Fi',
     category: 'text',
     provider: 'openrouter',
     cost: 2,
-    preview: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=600&auto=format&fit=crop&q=80',
-    tags: ['Аналитика', 'Google AI'],
-    desc: 'Быстрый контекстный анализ, структурирование и креативный синтез',
+    roleTitle: 'Sci-Fi',
+    preview: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&auto=format&fit=crop&q=80',
+    tags: ['Космос', 'Sci-Fi'],
+    desc: 'Научно-фантастические саги, киберпанк, космические одиссеи и хроники далеких миров',
     versions: [
-      { id: 'gemini-ultra', name: 'Gemini 1.5 Pro (Ultra)', slug: 'google/gemini-pro-1.5', cost: 3, tier: 'high', tierLabel: 'Максимум' },
-      { id: 'gemini-std', name: 'Gemini 1.5 Flash (Standard)', slug: 'google/gemini-flash-1.5', cost: 2, tier: 'medium', tierLabel: 'Стандарт' },
-      { id: 'gemini-lite', name: 'Gemini Flash Lite (Lite)', slug: 'google/gemini-flash-1.5', cost: 1, tier: 'lite', tierLabel: 'Лайт' },
+      { id: 'gemini-3-flash', name: 'Gemini 3 Flash', slug: 'google/gemini-3.7-flash', cost: 3 },
+      { id: 'gemini-35-flash-lite', name: 'Gemini 3.5 Flash Lite', slug: 'google/gemini-3.5-flash-lite', cost: 2 },
+      { id: 'gemini-25-flash', name: 'Gemini 2.5 Flash', slug: 'google/gemini-2.5-flash', cost: 1 },
     ],
     aspectRatios: [],
     samplePrompts: [
-      'Сделай сравнительный анализ трендов в дизайне 2026',
-      'Составь скрипт прогрева для Telegram-канала'
+      'Хроника экспедиции к мыслящему кристаллическому океану на краю галактики',
+      'История андроида-музыканта в неоновом киберпанк-мегаполисе 2180 года'
     ]
   },
   'llama-3': {
     id: 'llama-3',
-    name: 'Llama 3',
+    name: 'Llama Эпос',
     category: 'text',
     provider: 'openrouter',
     cost: 1,
-    preview: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=600&auto=format&fit=crop&q=80',
-    tags: ['Open Source', 'Быстрый'],
-    desc: 'Мощная открытая модель Meta для повседневных задач и диалогов',
+    roleTitle: 'Эпос',
+    preview: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
+    tags: ['Приключения', 'Эпос'],
+    desc: 'Захватывающие странствия, поиск сокровищ, древние воины и рыцарские романы',
     versions: [
-      { id: 'llama-ultra', name: 'Llama 3.3 70B (Ultra)', slug: 'meta-llama/llama-3.3-70b-instruct', cost: 2, tier: 'high', tierLabel: 'Максимум' },
-      { id: 'llama-std', name: 'Llama 3 70B (Standard)', slug: 'meta-llama/llama-3-70b-instruct', cost: 1, tier: 'medium', tierLabel: 'Стандарт' },
-      { id: 'llama-lite', name: 'Llama 3 8B (Lite)', slug: 'meta-llama/llama-3-8b-instruct', cost: 1, tier: 'lite', tierLabel: 'Лайт' },
+      { id: 'llama-ultra', name: 'Llama 3.3 70B', slug: 'meta-llama/llama-3.3-70b-instruct', cost: 2 },
+      { id: 'llama-std', name: 'Llama 3 70B', slug: 'meta-llama/llama-3-70b-instruct', cost: 1 },
+      { id: 'llama-lite', name: 'Llama 3 8B', slug: 'meta-llama/llama-3-8b-instruct', cost: 1 },
     ],
     aspectRatios: [],
     samplePrompts: [
-      'Предложи 10 идей для вирусных TikTok роликов',
-      'Напиши вовлекающее приветствие для новых подписчиков'
+      'Опасная экспедиция за затерянным золотым компасом в сердце древних джунглей',
+      'Легенда о рыцаре, давшем клятву защитить последнее Древо Света'
     ]
   },
 };
 
+const MODEL_ALIASES = {
+  'gpt-tales': 'gpt-4o',
+  'claude-mystic': 'claude-sonnet',
+  'gemini-scifi': 'gemini-pro',
+  'llama-epic': 'llama-3',
+  'veo3.1': 'veo-3-1',
+  'veo-3.1': 'veo-3-1',
+};
+
 /**
- * Найти модель по id.
+ * Найти модель по id (с поддержкой алиасов).
  */
 function getModel(modelId) {
-  return AI_MODELS[modelId] || null;
+  if (!modelId) return null;
+  const resolvedId = MODEL_ALIASES[modelId] || modelId;
+  return AI_MODELS[resolvedId] || AI_MODELS[modelId] || null;
 }
 
 /**

@@ -8,22 +8,35 @@ const { getAllModels, getModel } = require('../config/models');
  * Главное меню бота.
  */
 function mainMenuKeyboard() {
+  const webAppUrl = process.env.TELEGRAM_WEBAPP_URL || process.env.CLIENT_URL;
+
+  const rows = [];
+
+  // Добавляем большую кнопку запуска WebApp, если URL задан
+  if (webAppUrl && webAppUrl.startsWith('https://')) {
+    rows.push([{ text: '🚀 Запустить MorphAI WebApp', web_app: { url: webAppUrl } }]);
+  } else if (webAppUrl) {
+    rows.push([{ text: '🚀 Открыть MorphAI WebApp', url: webAppUrl }]);
+  }
+
+  rows.push(
+    [
+      { text: '📸 Фото', callback_data: 'cat:photo' },
+      { text: '🎬 Видео', callback_data: 'cat:video' },
+    ],
+    [
+      { text: '✍️ Текст', callback_data: 'cat:text' },
+      { text: '🔄 Face Swap', callback_data: 'faceswap:start' },
+    ],
+    [
+      { text: '💰 Баланс', callback_data: 'balance' },
+      { text: '📋 История', callback_data: 'history' },
+    ]
+  );
+
   return {
     reply_markup: {
-      inline_keyboard: [
-        [
-          { text: '📸 Фото', callback_data: 'cat:photo' },
-          { text: '🎬 Видео', callback_data: 'cat:video' },
-        ],
-        [
-          { text: '✍️ Текст', callback_data: 'cat:text' },
-          { text: '🔄 Face Swap', callback_data: 'faceswap:start' },
-        ],
-        [
-          { text: '💰 Баланс', callback_data: 'balance' },
-          { text: '📋 История', callback_data: 'history' },
-        ],
-      ],
+      inline_keyboard: rows,
     },
   };
 }
