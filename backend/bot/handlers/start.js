@@ -42,6 +42,24 @@ function setupStartHandler(bot) {
         '🔄 *Face Swap* — замена лиц в видео и портретах\n\n' +
         'Запустите веб-приложение или выберите действие ниже 👇';
 
+      const webAppUrl = process.env.TELEGRAM_WEBAPP_URL || process.env.CLIENT_URL;
+
+      // Принудительно обновляем кнопку меню для этого пользователя (актуально для мобильных)
+      if (webAppUrl && webAppUrl.startsWith('https://')) {
+        try {
+          await bot.setChatMenuButton({
+            chat_id: chatId,
+            menu_button: {
+              type: 'web_app',
+              text: '✨ MorphAI Studio',
+              web_app: { url: webAppUrl },
+            },
+          });
+        } catch (menuErr) {
+          // игнорируем ошибку если Telegram временно недоступен
+        }
+      }
+
       await bot.sendMessage(chatId, greeting + description, {
         parse_mode: 'Markdown',
         ...mainMenuKeyboard(),
