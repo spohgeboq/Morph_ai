@@ -6,6 +6,7 @@ import {
   Plus, 
   Heart, 
   ShieldCheck, 
+  LayoutDashboard,
   Globe, 
   Send, 
   FileText, 
@@ -472,10 +473,6 @@ const Profile = () => {
               <div className="profile-user-info">
                 <div className="profile-user-name-row">
                   <h2 className="profile-user-name">{displayName}</h2>
-                  <span className="profile-pro-badge">
-                    <Sparkles size={10} />
-                    <span>PRO</span>
-                  </span>
                 </div>
 
                 <p className="profile-username-tag">{displayUsername}</p>
