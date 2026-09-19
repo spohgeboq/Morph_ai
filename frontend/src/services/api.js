@@ -1,7 +1,30 @@
 import WebApp from '@twa-dev/sdk';
 
-// Всегда используем относительный путь — Vite proxy проксирует /api → http://localhost:5000
-const API_BASE = '/api';
+// Production backend URL (наш реальный сервер с бэкендом)
+const PRODUCTION_BACKEND = 'https://91.201.215.21.sslip.io';
+
+/**
+ * Определяем правильный API_BASE.
+ * Если фронтенд загружен с нашего production-сервера (91.201.215.21.sslip.io),
+ * используем относительный путь /api — Nginx проксирует к бэкенду.
+ * Если фронтенд загружен откуда-то ещё (напр. morphai.chiclab.me / Vercel / localhost),
+ * используем полный URL к production-бэкенду.
+ */
+function getApiBase() {
+  try {
+    const host = window.location.hostname;
+    // Наш продакшн сервер — используем относительный путь
+    if (host.includes('91.201.215.21') || host === 'localhost' || host === '127.0.0.1') {
+      return '/api';
+    }
+    // Любой другой хост (morphai.chiclab.me, vercel и т.д.) — полный URL к бэкенду
+    return PRODUCTION_BACKEND + '/api';
+  } catch (e) {
+    return '/api';
+  }
+}
+
+const API_BASE = getApiBase();
 
 /**
  * Получить данные текущего пользователя Telegram WebApp
