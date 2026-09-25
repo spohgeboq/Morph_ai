@@ -86,44 +86,43 @@ const Chats = () => {
       if (id) {
         fetchUserGenerations(id).then((serverGens) => {
           if (serverGens && serverGens.length > 0) {
-            setChats(prev => {
-              if (prev && prev.length > 0) return prev;
-              return serverGens.map(g => {
-                const isText = g.task_type === 'text';
-                const isVideo = g.task_type === 'video';
-                const cleanModel = formatModelDisplayName(g.model_name, g.task_type);
+            const formattedGens = serverGens.map(g => {
+              const isText = g.task_type === 'text';
+              const isVideo = g.task_type === 'video';
+              const cleanModel = formatModelDisplayName(g.model_name, g.task_type);
 
-                return {
-                  id: 'chat_' + (g.id || g.task_id),
-                  title: g.prompt?.slice(0, 35) || 'Генерация',
-                  modelId: g.model_name || (isText ? 'gpt-4o' : 'kling'),
-                  modelName: cleanModel,
-                  versionName: g.tier_name ? formatModelDisplayName(g.tier_name, g.task_type) : cleanModel,
-                  cost: g.credits_charged || (isText ? 3 : 10),
-                  category: isVideo ? 'video' : (isText ? 'text' : 'photo'),
-                  time: 'Недавно',
-                  dateStr: new Date(g.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }),
-                  preview: isText ? '' : g.result_url,
-                  messages: [
-                    {
-                      id: 'm_u_' + g.id,
-                      sender: 'user',
-                      text: g.prompt,
-                      time: '12:00'
-                    },
-                    {
-                      id: 'm_a_' + g.id,
-                      sender: 'ai',
-                      type: isVideo ? 'video' : (isText ? 'text' : 'image'),
-                      prompt: g.prompt,
-                      mediaUrl: isText ? null : g.result_url,
-                      text: isText ? (g.result_text || g.result_url || g.prompt) : `Генерация завершена через ${cleanModel}.`,
-                      time: '12:01'
-                    }
-                  ]
-                };
-              });
+              return {
+                id: 'chat_' + (g.id || g.task_id),
+                title: g.prompt?.slice(0, 35) || 'Генерация',
+                modelId: g.model_name || (isText ? 'gpt-4o' : 'kling'),
+                modelName: cleanModel,
+                versionName: g.tier_name ? formatModelDisplayName(g.tier_name, g.task_type) : cleanModel,
+                cost: g.credits_charged || (isText ? 3 : 10),
+                category: isVideo ? 'video' : (isText ? 'text' : 'photo'),
+                time: 'Недавно',
+                dateStr: new Date(g.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }),
+                preview: isText ? '' : g.result_url,
+                messages: [
+                  {
+                    id: 'm_u_' + g.id,
+                    sender: 'user',
+                    text: g.prompt,
+                    time: '12:00'
+                  },
+                  {
+                    id: 'm_a_' + g.id,
+                    sender: 'ai',
+                    type: isVideo ? 'video' : (isText ? 'text' : 'image'),
+                    prompt: g.prompt,
+                    mediaUrl: isText ? null : g.result_url,
+                    text: isText ? (g.result_text || g.result_url || g.prompt) : `Генерация завершена через ${cleanModel}.`,
+                    time: '12:01'
+                  }
+                ]
+              };
             });
+            // Update chats with server data, overriding local cache
+            setChats(formattedGens);
           }
         }).catch(() => {});
       }
@@ -450,16 +449,6 @@ const Chats = () => {
         </div>
 
         <div className="chats-header-actions">
-          {/* Кнопка-тумблер демо: переключение между пустым экраном и списком */}
-          <button 
-            className="chats-demo-toggle-btn"
-            onClick={handleToggleEmptyState}
-            title="Тест пустого экрана и списка"
-          >
-            <RotateCcw size={12} />
-            <span>{chats.length === 0 ? 'Загрузить историю' : 'Очистить историю'}</span>
-          </button>
-
           {/* Кнопка создания нового чата (+) */}
           <button 
             className="chats-new-chat-btn" 
