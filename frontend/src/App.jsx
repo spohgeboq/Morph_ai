@@ -11,6 +11,8 @@ import Create from './pages/Create';
 import Chats from './pages/Chats';
 import Profile from './pages/Profile';
 import AdminHub from './pages/Admin/AdminHub';
+import Legal from './pages/Legal';
+import Footer from './components/Footer';
 
 import { UserProvider } from './components/UserContext';
 
@@ -38,7 +40,14 @@ function AppContent() {
         <Route path="/chats" element={<Chats />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/admin" element={<AdminHub />} />
+        <Route path="/legal" element={<Legal />} />
+        <Route path="/privacy" element={<Legal />} />
+        <Route path="/terms" element={<Legal />} />
+        <Route path="/refund" element={<Legal />} />
+        <Route path="/security" element={<Legal />} />
+        <Route path="/contacts" element={<Legal />} />
       </Routes>
+      {!isAdmin && <Footer />}
       {!isAdmin && <BottomNav />}
     </>
   );

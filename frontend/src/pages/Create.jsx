@@ -5,6 +5,7 @@ import { useLanguage } from '../components/LanguageContext';
 import { useCurrency } from '../components/CurrencyContext';
 import { useUser } from '../components/UserContext';
 import { fetchModels, requestGeneration, checkTaskStatus, uploadFileToR2 } from '../services/api';
+import { PaymentTrustRow } from '../components/PaymentBadges';
 import { 
   Search, 
   Sparkles, 
@@ -952,9 +953,9 @@ const Create = () => {
                 </div>
               </div>
 
-              <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '14px' }}>
-                {t('paymentMethodsHint')}
-              </p>
+              <div style={{ marginTop: '16px' }}>
+                <PaymentTrustRow compact={true} />
+              </div>
             </div>
           </div>
         )}
@@ -1323,9 +1324,9 @@ const Create = () => {
               </div>
             </div>
 
-            <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '14px' }}>
-              {t('paymentMethodsHint')}
-            </p>
+            <div style={{ marginTop: '16px' }}>
+              <PaymentTrustRow compact={true} />
+            </div>
           </div>
         </div>
       )}

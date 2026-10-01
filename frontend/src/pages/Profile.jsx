@@ -1045,7 +1045,7 @@ const Profile = () => {
                 style={{ cursor: 'pointer' }}
                 onClick={() => {
                   triggerHaptic('light');
-                  setActiveDocModal('privacy');
+                  navigate('/privacy');
                 }}
               >
                 <div className="profile-setting-left">
@@ -1066,7 +1066,7 @@ const Profile = () => {
                 style={{ cursor: 'pointer' }}
                 onClick={() => {
                   triggerHaptic('light');
-                  setActiveDocModal('terms');
+                  navigate('/terms');
                 }}
               >
                 <div className="profile-setting-left">

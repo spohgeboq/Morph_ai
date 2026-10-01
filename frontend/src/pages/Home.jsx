@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 
 import { useUser } from '../components/UserContext';
+import { PaymentTrustRow } from '../components/PaymentBadges';
 import { 
   fetchPublicStories, 
   fetchPublicTemplates, 
@@ -1213,9 +1214,9 @@ const Home = () => {
               </div>
             </div>
 
-            <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '14px' }}>
-              {t('paymentMethodsHint')}
-            </p>
+            <div style={{ marginTop: '16px' }}>
+              <PaymentTrustRow compact={true} />
+            </div>
           </div>
         </div>
       )}
