@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Send, Image as ImageIcon, Sparkles } from 'lucide-react';
+import { API_BASE } from '../services/api';
 
 const GeneratorForm = ({ activeService }) => {
   const [prompt, setPrompt] = useState('');
@@ -14,10 +15,9 @@ const GeneratorForm = ({ activeService }) => {
     setResult(null);
 
     try {
-      // Здесь будет отправка запроса на наш бэкенд
       const endpoint = activeService === 'image' 
-        ? 'http://localhost:5000/api/generate/image' 
-        : 'http://localhost:5000/api/generate/text';
+        ? `${API_BASE}/generate/image` 
+        : `${API_BASE}/generate/text`;
 
       const response = await fetch(endpoint, {
         method: 'POST',

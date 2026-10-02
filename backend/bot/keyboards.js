@@ -8,7 +8,7 @@ const { getAllModels, getModel } = require('../config/models');
  * Главное меню бота.
  */
 function mainMenuKeyboard() {
-  const webAppUrl = process.env.TELEGRAM_WEBAPP_URL || process.env.CLIENT_URL;
+  const webAppUrl = process.env.TELEGRAM_WEBAPP_URL || process.env.CLIENT_URL || 'https://morph-ai.asia';
 
   const rows = [];
 

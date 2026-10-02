@@ -214,7 +214,7 @@ const Legal = () => {
                 </div>
                 <div className="req-row">
                   <span className="req-key">Электронная почта:</span>
-                  <span className="req-value"><a href="mailto:support@morphai.kz">support@morphai.kz</a></span>
+                  <span className="req-value"><a href="mailto:support@morph-ai.asia">support@morph-ai.asia</a></span>
                 </div>
                 <div className="req-row">
                   <span className="req-key">Telegram-поддержка:</span>

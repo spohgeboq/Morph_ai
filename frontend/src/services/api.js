@@ -1,30 +1,33 @@
 import WebApp from '@twa-dev/sdk';
 
-// Production backend URL (наш реальный сервер с бэкендом)
-const PRODUCTION_BACKEND = 'https://91.201.215.21.sslip.io';
+// Production backend URL (наш реальный сервер с бэкендом на VPS)
+const PRODUCTION_BACKEND = (import.meta.env.VITE_API_URL || 'https://api.morph-ai.asia').replace(/\/+$/, '');
 
 /**
  * Определяем правильный API_BASE.
- * Если фронтенд загружен с нашего production-сервера (91.201.215.21.sslip.io),
- * используем относительный путь /api — Nginx проксирует к бэкенду.
- * Если фронтенд загружен откуда-то ещё (напр. morphai.chiclab.me / Vercel / localhost),
- * используем полный URL к production-бэкенду.
+ * Если фронтенд открыт локально (localhost / 127.0.0.1) — используем относительный путь /api (проксируется Vite).
+ * Если фронтенд загружен с нашего API-сервера (api.morph-ai.asia) — используем /api напрямую.
+ * Для всех остальных хостов (morph-ai.asia, www.morph-ai.asia, Vercel) — используем полный URL к бэкенду.
  */
 function getApiBase() {
   try {
     const host = window.location.hostname;
-    // Наш продакшн сервер — используем относительный путь
-    if (host.includes('91.201.215.21') || host === 'localhost' || host === '127.0.0.1') {
+    // Локальная разработка: Vite проксирует /api на http://localhost:5000
+    if (host === 'localhost' || host === '127.0.0.1') {
       return '/api';
     }
-    // Любой другой хост (morphai.chiclab.me, vercel и т.д.) — полный URL к бэкенду
-    return PRODUCTION_BACKEND + '/api';
+    // Если фронтенд открыт напрямую на бэкенд-сервере
+    if (host === 'api.morph-ai.asia' || host.includes('91.201.215.21')) {
+      return '/api';
+    }
+    // Продакшн на Vercel (morph-ai.asia, www.morph-ai.asia, *.vercel.app)
+    return `${PRODUCTION_BACKEND}/api`;
   } catch (e) {
-    return '/api';
+    return `${PRODUCTION_BACKEND}/api`;
   }
 }
 
-const API_BASE = getApiBase();
+export const API_BASE = getApiBase();
 
 /**
  * Получить данные текущего пользователя Telegram WebApp

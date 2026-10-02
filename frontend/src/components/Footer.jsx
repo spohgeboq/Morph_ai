@@ -61,7 +61,7 @@ const Footer = () => {
             <div className="footer-contacts-info">
               <div className="footer-contact-item">
                 <Mail size={14} />
-                <a href="mailto:support@morphai.kz" className="footer-contact-link">support@morphai.kz</a>
+                <a href="mailto:support@morph-ai.asia" className="footer-contact-link">support@morph-ai.asia</a>
               </div>
               <div className="footer-contact-item">
                 <MapPin size={14} />

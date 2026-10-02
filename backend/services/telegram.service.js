@@ -182,16 +182,12 @@ class TelegramService {
    * @private
    */
   _getAppKeyboard() {
-    const appUrl = process.env.TELEGRAM_WEBAPP_URL || process.env.CLIENT_URL || 'https://t.me/morphai_app_bot';
+    const appUrl = process.env.TELEGRAM_WEBAPP_URL || process.env.CLIENT_URL || 'https://morph-ai.asia';
+    const button = appUrl.startsWith('https://')
+      ? { text: '🚀 Открыть в MorphAI WebApp', web_app: { url: appUrl } }
+      : { text: '🚀 Открыть MorphAI', url: appUrl.startsWith('http') ? appUrl : 'https://t.me/morphai_app_bot' };
     return {
-      inline_keyboard: [
-        [
-          {
-            text: '🔗 Посмотреть в приложении',
-            url: appUrl.startsWith('http') ? appUrl : 'https://t.me/morphai_app_bot',
-          },
-        ],
-      ],
+      inline_keyboard: [[button]],
     };
   }
 

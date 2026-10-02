@@ -42,7 +42,7 @@ function setupStartHandler(bot) {
         '🔄 *Face Swap* — замена лиц в видео и портретах\n\n' +
         'Запустите веб-приложение или выберите действие ниже 👇';
 
-      const webAppUrl = process.env.TELEGRAM_WEBAPP_URL || process.env.CLIENT_URL;
+      const webAppUrl = process.env.TELEGRAM_WEBAPP_URL || process.env.CLIENT_URL || 'https://morph-ai.asia';
 
       // Принудительно обновляем кнопку меню для этого пользователя (актуально для мобильных)
       if (webAppUrl && webAppUrl.startsWith('https://')) {
@@ -72,7 +72,7 @@ function setupStartHandler(bot) {
 
   // Команда /app или /webapp или /login
   bot.onText(/\/app|\/webapp|\/login|\/auth/, async (msg) => {
-    const webAppUrl = process.env.TELEGRAM_WEBAPP_URL || process.env.CLIENT_URL;
+    const webAppUrl = process.env.TELEGRAM_WEBAPP_URL || process.env.CLIENT_URL || 'https://morph-ai.asia';
     const keyboard = webAppUrl && webAppUrl.startsWith('https://')
       ? { reply_markup: { inline_keyboard: [[{ text: '🚀 Открыть MorphAI Studio', web_app: { url: webAppUrl } }]] } }
       : (webAppUrl ? { reply_markup: { inline_keyboard: [[{ text: '🚀 Открыть MorphAI', url: webAppUrl }]] } } : mainMenuKeyboard());

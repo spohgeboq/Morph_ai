@@ -111,7 +111,7 @@ function initBot({ registry }) {
 
   // Настройка меню-кнопки (Menu Button) и команд бота
   try {
-    const webAppUrl = process.env.TELEGRAM_WEBAPP_URL || process.env.CLIENT_URL;
+    const webAppUrl = process.env.TELEGRAM_WEBAPP_URL || process.env.CLIENT_URL || 'https://morph-ai.asia';
 
     // Устанавливаем команды бота
     bot.setMyCommands([

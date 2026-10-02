@@ -42,9 +42,27 @@ const { initBot } = require('./bot/index');
 const app = express();
 
 // ==========================================
-// 1. Middleware
+// 1. Middleware & CORS
 // ==========================================
-app.use(cors());
+app.use(cors({
+  origin: (origin, callback) => {
+    // Разрешаем запросы без Origin (PiAPI/Runway webhooks, server-to-server, curl)
+    if (!origin) return callback(null, true);
+    // Разрешаем production домены, Vercel и локальную разработку
+    if (
+      origin.includes('morph-ai.asia') ||
+      origin.includes('vercel.app') ||
+      origin.includes('localhost') ||
+      origin.includes('127.0.0.1')
+    ) {
+      return callback(null, true);
+    }
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-telegram-init-data', 'x-requested-with'],
+}));
 app.use(express.json({ limit: '10mb' }));
 
 // ==========================================
