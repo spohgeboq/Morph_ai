@@ -390,12 +390,17 @@ export function clearAdminToken() {
   localStorage.removeItem(ADMIN_TOKEN_KEY);
 }
 
-export function adminAuthHeaders() {
+export function adminAuthHeaders(isJson = true) {
   const token = getAdminToken();
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { 'x-admin-token': token } : {}),
-  };
+  const headers = {};
+  if (isJson) {
+    headers['Content-Type'] = 'application/json';
+  }
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+    headers['x-admin-token'] = token;
+  }
+  return headers;
 }
 
 export async function adminLogin(password) {
@@ -744,7 +749,7 @@ export async function uploadAdminMedia(file, folder = 'admin_media') {
     try {
       res = await fetch(`${API_BASE}/admin/upload`, {
         method: 'POST',
-        headers: adminAuthHeaders(),
+        headers: adminAuthHeaders(false),
         body: formData,
       });
     } catch {

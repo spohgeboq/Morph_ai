@@ -61,8 +61,20 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-telegram-init-data', 'x-requested-with'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'x-admin-token',
+    'x-telegram-init-data',
+    'x-requested-with',
+    'Accept',
+    'Origin',
+    'Range',
+    'X-Requested-With'
+  ],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
 }));
+app.options('*', cors());
 app.use(express.json({ limit: '10mb' }));
 
 // ==========================================
