@@ -71,94 +71,8 @@ const Home = () => {
   // Magic Bar
   const [magicPrompt, setMagicPrompt] = useState('');
 
-  // 2. Галерея живых референсов
-  // 2. Шаблоны и референсы для генерации
-  const references = [
-    {
-      id: 1,
-      type: 'photo',
-      title: 'День Рождения',
-      category: 'photo',
-      model: 'Flux 1.1 Pro',
-      cost: 10,
-      thumb: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=600&auto=format&fit=crop',
-      prompt: 'Роскошная девушка в вечернем платье на капоте суперкара с тортом и бенгальскими огнями, ночной мегаполис, боке, пленочный теплый свет 8K',
-      isPromptLocked: false,
-      variableName: 'Возраст',
-      variablePlaceholder: 'Введите возраст для торта (например, 25)...'
-    },
-    {
-      id: 2,
-      type: 'video',
-      title: 'Reels — Столкновение',
-      category: 'video',
-      model: 'Kling 1.5 HD',
-      cost: 16,
-      videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-flying-through-neon-lit-cubes-in-cyberspace-42777-large.mp4',
-      thumb: 'https://images.unsplash.com/photo-1535295972055-1c762f4483e5?q=80&w=600&auto=format&fit=crop',
-      prompt: 'Кинематографичный слоу-мо полет сквозь неоновые кубы в киберпространстве с динамичным движением камеры',
-      isPromptLocked: true,
-      variableName: 'Локация',
-      variablePlaceholder: 'Введите локацию (например, Токио)...'
-    },
-    {
-      id: 3,
-      type: 'video',
-      title: 'Cyberpunk 2077',
-      category: 'video',
-      model: 'Kling 1.5 HD',
-      cost: 16,
-      videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-futuristic-robot-turning-its-head-41477-large.mp4',
-      thumb: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=600&auto=format&fit=crop',
-      prompt: 'Морфинг портрета в киборга с неоновой лицевой пластиной и микросхемами, дождь и неоновые огни',
-      isPromptLocked: false,
-      variableName: 'Цвет неона',
-      variablePlaceholder: 'Например, синий и фуксия...'
-    },
-    {
-      id: 4,
-      type: 'photo',
-      title: 'Old Money 35mm',
-      category: 'photo',
-      model: 'Flux 1.1 Pro',
-      cost: 10,
-      thumb: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=600&auto=format&fit=crop',
-      prompt: 'Элитный портрет на закате в яхт-клубе, мягкий пленочный теплый свет Leica 35mm, минимализм, стиль Old Money',
-      isPromptLocked: false,
-      variableName: 'Имя/Деталь',
-      variablePlaceholder: 'Инициалы или стиль одежды...'
-    },
-    {
-      id: 5,
-      type: 'video',
-      title: 'Лес Светлячков',
-      category: 'video',
-      model: 'Kling 1.5 HD',
-      cost: 16,
-      videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-fireflies-glowing-in-the-forest-at-night-42805-large.mp4',
-      thumb: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=600&auto=format&fit=crop',
-      prompt: 'Волшебный ночной лес со светлячками и мягким свечением деревьев, сказочная кинематографичная атмосфера',
-      isPromptLocked: true,
-      variableName: 'Настроение',
-      variablePlaceholder: 'Например, мистическое или сказочное...'
-    },
-    {
-      id: 6,
-      type: 'photo',
-      title: 'Anime Cyber Girl',
-      category: 'photo',
-      model: 'Flux 1.1 Pro',
-      cost: 8,
-      thumb: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600&auto=format&fit=crop',
-      prompt: 'Аниме киберпанк девушка с неоновыми аксессуарами, студийная отрисовка в стиле Makoto Shinkai 4K',
-      isPromptLocked: false,
-      variableName: 'Цвет волос',
-      variablePlaceholder: 'Например, серебристый или розовый...'
-    }
-  ];
-
-  // Шаблоны и конфиг фотосета из БД (Примеры генераций)
-  const [templatesList, setTemplatesList] = useState(references);
+  // Шаблоны и видео из БД (добавляются админом через админ-панель)
+  const [templatesList, setTemplatesList] = useState([]);
   const [photoshootConfig, setPhotoshootConfig] = useState(() => {
     try {
       const cached = localStorage.getItem('morphai_photoshoot_config');
@@ -220,11 +134,11 @@ const Home = () => {
         });
         setTemplatesList(mapped);
       } else {
-        setTemplatesList(references);
+        setTemplatesList([]);
       }
     }).catch(err => {
       console.error('Error fetching templates:', err);
-      setTemplatesList(references);
+      setTemplatesList([]);
     });
 
     const handlePsUpdate = (e) => {
