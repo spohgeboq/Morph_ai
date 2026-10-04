@@ -34,6 +34,7 @@ import { useToast } from '../components/ToastContext';
 import { useLanguage } from '../components/LanguageContext';
 import { useCurrency } from '../components/CurrencyContext';
 import { useUser } from '../components/UserContext';
+import RechargeModal from '../components/RechargeModal';
 import { fetchUserGenerations } from '../services/api';
 import { formatModelDisplayName } from '../utils/modelNames';
 
@@ -1179,91 +1180,11 @@ const Profile = () => {
       {/* =========================================================================
           МОДАЛ 1: ПОПОЛНЕНИЕ БАЛАНСА
          ========================================================================= */}
-      {showRechargeModal && (
-        <div className="profile-modal-backdrop" onClick={() => setShowRechargeModal(false)}>
-          <div className="profile-modal-sheet" onClick={(e) => e.stopPropagation()}>
-            <div className="profile-modal-header">
-              <h3 className="profile-modal-title">
-                <Sparkles size={20} color="var(--color-primary-light)" />
-                <span>{t('rechargeModalTitle')}</span>
-              </h3>
-              <button 
-                className="profile-modal-close-btn"
-                onClick={() => setShowRechargeModal(false)}
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.84rem', marginBottom: '18px' }}>
-              {t('rechargeModalDesc')}
-            </p>
-
-            <div className="profile-recharge-grid">
-              {/* Пакет 100 CR */}
-              <div 
-                className="profile-recharge-item"
-                onClick={() => handleUpdateBalance(100)}
-              >
-                <div className="profile-recharge-item-left">
-                  <div className="profile-recharge-token-icon">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 2L2 12L12 22L22 12L12 2Z" stroke="#e5b95c" strokeWidth="2.2" strokeLinejoin="round" fill="rgba(229, 185, 92, 0.25)" />
-                      <path d="M12 6L6 12L12 18L18 12L12 6Z" stroke="#e5b95c" strokeWidth="1.5" />
-                    </svg>
-                  </div>
-                  <div className="profile-recharge-token-info">
-                    <h4>+100 Credits</h4>
-                    <p>{t('pack100Hint')}</p>
-                  </div>
-                </div>
-                <button className="profile-recharge-price-btn">{formatPrice(1490)}</button>
-              </div>
-
-              {/* Пакет 350 CR (Хит) */}
-              <div 
-                className="profile-recharge-item popular"
-                onClick={() => handleUpdateBalance(350)}
-              >
-                <span className="profile-recharge-badge-hit">{t('hitBadge')}</span>
-                <div className="profile-recharge-item-left">
-                  <div className="profile-recharge-token-icon">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 2L2 12L12 22L22 12L12 2Z" stroke="#e5b95c" strokeWidth="2.2" strokeLinejoin="round" fill="rgba(229, 185, 92, 0.25)" />
-                      <path d="M12 6L6 12L12 18L18 12L12 6Z" stroke="#e5b95c" strokeWidth="1.5" />
-                    </svg>
-                  </div>
-                  <div className="profile-recharge-token-info">
-                    <h4>+350 Credits</h4>
-                    <p>{t('pack350Hint')}</p>
-                  </div>
-                </div>
-                <button className="profile-recharge-price-btn">{formatPrice(3990)}</button>
-              </div>
-
-              {/* Пакет 1250 CR (VIP) */}
-              <div 
-                className="profile-recharge-item"
-                onClick={() => handleUpdateBalance(1250)}
-              >
-                <div className="profile-recharge-item-left">
-                  <div className="profile-recharge-token-icon">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 2L2 12L12 22L22 12L12 2Z" stroke="#e5b95c" strokeWidth="2.2" strokeLinejoin="round" fill="rgba(229, 185, 92, 0.25)" />
-                      <path d="M12 6L6 12L12 18L18 12L12 6Z" stroke="#e5b95c" strokeWidth="1.5" />
-                    </svg>
-                  </div>
-                  <div className="profile-recharge-token-info">
-                    <h4>+1250 Credits</h4>
-                    <p>{t('vipBadge')}</p>
-                  </div>
-                </div>
-                <button className="profile-recharge-price-btn">{formatPrice(9990)}</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <RechargeModal
+        isOpen={showRechargeModal}
+        onClose={() => setShowRechargeModal(false)}
+        balance={balance}
+      />
 
       {/* =========================================================================
           МОДАЛ 2: СОЗДАНИЕ АЛЬБОМА
@@ -1451,7 +1372,7 @@ const Profile = () => {
                     <br />• Материалы сексуального характера и порнография (NSFW 18+);
                     <br />• Создание дипфейков реальных лиц без их согласия, клевета и дезинформация;
                     <br />• Сцены жестокости, экстремизм, дискриминация и призывы к насилию.
-                    <br /><em>Попытка ввода запрещенных стоп-слов автоматически отклоняется системой без списания токенов. При повторных злоупотреблениях аккаунт блокируется без возврата средств.</em>
+                    <br /><em>Попытка ввода запрещенных стоп-слов автоматически отклоняется системой без списания баланса. При повторных злоупотреблениях аккаунт блокируется без возврата средств.</em>
                   </p>
 
                   <p style={{ marginBottom: '14px' }}>
@@ -1461,7 +1382,7 @@ const Profile = () => {
 
                   <p style={{ marginBottom: '14px' }}>
                     <strong style={{ color: '#ffffff' }}>3. Защита баланса и автоматический возврат</strong><br />
-                    Если генерация прервалась из-за сетевого сбоя, превышения времени ожидания или ошибки нейросети — списанные кредиты мгновенно возвращаются на ваш баланс в полном объеме.
+                    Если генерация прервалась из-за сетевого сбоя, превышения времени ожидания или ошибки нейросети — списанный баланс мгновенно возвращается на ваш счет в полном объеме.
                   </p>
                 </>
               ) : (
@@ -1619,7 +1540,7 @@ const Profile = () => {
 
             <div style={{ marginTop: '14px', fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
               <ShieldCheck size={13} color="#10b981" />
-              <span>Мгновенное начисление 50 кредитов для новых пользователей</span>
+              <span>Мгновенное начисление 50 CR бонуса для новых пользователей</span>
             </div>
           </div>
         </div>

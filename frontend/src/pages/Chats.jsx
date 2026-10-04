@@ -20,6 +20,7 @@ import {
   X
 } from 'lucide-react';
 import { useUser } from '../components/UserContext';
+import RechargeModal from '../components/RechargeModal';
 import { fetchUserGenerations, checkTaskStatus } from '../services/api';
 import { formatModelDisplayName } from '../utils/modelNames';
 
@@ -254,7 +255,7 @@ const Chats = () => {
                 return {
                   ...m,
                   status: 'failed',
-                  text: `Ошибка генерации: ${errorMsg}. Кредиты возвращены.`,
+                  text: `Ошибка генерации: ${errorMsg}. Баланс возвращен.`,
                 };
               }
               return m;
@@ -263,7 +264,7 @@ const Chats = () => {
             setChats(all => all.map(c => (c.id === prev.id ? updated : c)));
             return updated;
           });
-          showToast('Сбой генерации. Кредиты возвращены на баланс.', 'error');
+          showToast('Сбой генерации. Баланс возвращен.', 'error');
         }
       } catch (err) {
         console.error('Polling in chat error:', err);
@@ -372,7 +373,7 @@ const Chats = () => {
     if (!replyInput.trim() || !activeChat || isReplying) return;
 
     if (balance < currentModelCost) {
-      showToast('Недостаточно кредитов для генерации! Пополните баланс.', 'error');
+      showToast('Недостаточно средств для генерации! Пополните баланс.', 'error');
       setShowRechargeModal(true);
       return;
     }
@@ -820,49 +821,11 @@ const Chats = () => {
       )}
 
       {/* 5. МОДАЛЬНОЕ ОКНО ПОПОЛНЕНИЯ БАЛАНСА */}
-      {showRechargeModal && (
-        <div className="modal-backdrop" onClick={() => setShowRechargeModal(false)}>
-          <div className="bottom-sheet" onClick={(e) => e.stopPropagation()}>
-            <div className="sheet-header">
-              <div>
-                <h3 className="modal-title">Пополнение баланса</h3>
-                <span className="sheet-subtitle">Текущий баланс: {balance} CR</span>
-              </div>
-              <button className="sheet-close-btn" onClick={() => setShowRechargeModal(false)}>
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="credit-packages">
-              <div className="credit-pkg-card" onClick={() => { setBalance(b => b + 100); setShowRechargeModal(false); showToast('Начислено +100 кредитов!', 'token'); }}>
-                <div className="pkg-left">
-                  <span className="pkg-amount">100 CR</span>
-                  <span className="pkg-desc">Для сказок и фото</span>
-                </div>
-                <button className="pkg-price-btn">{formatPrice(1490)}</button>
-              </div>
-
-              <div className="credit-pkg-card popular" onClick={() => { setBalance(b => b + 350); setShowRechargeModal(false); showToast('Начислено +350 кредитов!', 'token'); }}>
-                <span className="pkg-badge">ХИТ • +50 В ПОДАРОК</span>
-                <div className="pkg-left">
-                  <span className="pkg-amount">350 CR</span>
-                  <span className="pkg-desc">Оптимальный набор</span>
-                </div>
-                <button className="pkg-price-btn accent">{formatPrice(3990)}</button>
-              </div>
-
-              <div className="credit-pkg-card" onClick={() => { setBalance(b => b + 1250); setShowRechargeModal(false); showToast('Начислено +1250 кредитов!', 'token'); }}>
-                <span className="pkg-badge vip">VIP • +250 В ПОДАРОК</span>
-                <div className="pkg-left">
-                  <span className="pkg-amount">1250 CR</span>
-                  <span className="pkg-desc">Максимум видео и музыки</span>
-                </div>
-                <button className="pkg-price-btn">{formatPrice(9990)}</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <RechargeModal
+        isOpen={showRechargeModal}
+        onClose={() => setShowRechargeModal(false)}
+        balance={balance}
+      />
     </div>
   );
 };

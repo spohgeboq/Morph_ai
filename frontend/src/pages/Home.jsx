@@ -34,7 +34,7 @@ import {
 
 import { useUser } from '../components/UserContext';
 import { PaymentTrustRow } from '../components/PaymentBadges';
-import TariffsSection from '../components/TariffsSection';
+import RechargeModal from '../components/RechargeModal';
 import { 
   fetchPublicStories, 
   fetchPublicTemplates, 
@@ -158,7 +158,7 @@ const Home = () => {
   ];
 
   // Шаблоны и конфиг фотосета из БД (Примеры генераций)
-  const [templatesList, setTemplatesList] = useState([]);
+  const [templatesList, setTemplatesList] = useState(references);
   const [photoshootConfig, setPhotoshootConfig] = useState(() => {
     try {
       const cached = localStorage.getItem('morphai_photoshoot_config');
@@ -199,7 +199,7 @@ const Home = () => {
     }).catch(err => console.error('Error fetching photoshoot config:', err));
 
     fetchPublicTemplates().then(data => {
-      if (Array.isArray(data)) {
+      if (Array.isArray(data) && data.length > 0) {
         const isVideoMedia = (url) => typeof url === 'string' && /\.(mp4|webm|mov|m4v)(\?.*)?$/i.test(url.trim());
         const mapped = data.map(item => {
           const isVideo = isVideoMedia(item.video_url) || isVideoMedia(item.media_url) || (item.type === 'video' && !item.thumb_url);
@@ -219,8 +219,13 @@ const Home = () => {
           };
         });
         setTemplatesList(mapped);
+      } else {
+        setTemplatesList(references);
       }
-    }).catch(err => console.error('Error fetching templates:', err));
+    }).catch(err => {
+      console.error('Error fetching templates:', err);
+      setTemplatesList(references);
+    });
 
     const handlePsUpdate = (e) => {
       if (e.detail) setPhotoshootConfig(e.detail);
@@ -326,7 +331,7 @@ const Home = () => {
   const handleExecutePhotoshoot = async () => {
     const shootCost = Number(photoshootConfig?.cost) || 10;
     if (balance < shootCost) {
-      showToast('Недостаточно кредитов для фотосессии! Пополните баланс.', 'error');
+      showToast('Недостаточно средств для фотосессии! Пополните баланс.', 'error');
       setShowRechargeModal(true);
       return;
     }
@@ -669,11 +674,6 @@ const Home = () => {
           </div>
         </section>
       )}
-
-      {/* 6. ТАРИФНЫЕ ПЛАНЫ И ПАКЕТЫ КРЕДИТОВ (ЭКВАЙРИНГ / БАНКОВСКИЙ КОМПЛАЕНС) */}
-      <section className="home-tariffs-showcase" style={{ padding: '0 20px', maxWidth: '1240px', margin: '40px auto 20px' }}>
-        <TariffsSection />
-      </section>
 
       {/* =========================================================
           ПОЛНОЭКРАННЫЙ ЦЕНТРИРОВАННЫЙ STORIES-ПЛЕЕР С ВИДЕО
@@ -1106,7 +1106,7 @@ const Home = () => {
                 onClick={() => setShowRechargeModal(true)}
               >
                 <Lock size={16} />
-                <span>Недостаточно кредитов ({selectedTemplate.cost} CR) • Пополнить</span>
+                <span>Недостаточно средств ({selectedTemplate.cost} CR) • Пополнить</span>
               </button>
             )}
           </div>
@@ -1179,53 +1179,11 @@ const Home = () => {
       {/* =========================================================
           МОДАЛКА ПОПОЛНЕНИЯ БАЛАНСА
           ========================================================= */}
-      {showRechargeModal && (
-        <div className="modal-backdrop" onClick={() => setShowRechargeModal(false)}>
-          <div className="bottom-sheet" onClick={(e) => e.stopPropagation()}>
-            <div className="sheet-header">
-              <div className="sheet-title-info">
-                <h3>{t('rechargeModalCredits')}</h3>
-                <span className="sheet-subtitle">{t('currentBalance', { balance })}</span>
-              </div>
-              <button className="sheet-close-btn" onClick={() => setShowRechargeModal(false)}>
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="credit-packages">
-              <div className="credit-pkg-card" onClick={() => { setBalance(b => b + 100); setShowRechargeModal(false); showToast(t('tokensCredited', { amount: 100 }), 'token'); }}>
-                <div className="pkg-left">
-                  <span className="pkg-amount">100 CR</span>
-                  <span className="pkg-desc">{t('pkgStoriesPhotos')}</span>
-                </div>
-                <button className="pkg-price-btn">{formatPrice(1490)}</button>
-              </div>
-
-              <div className="credit-pkg-card popular" onClick={() => { setBalance(b => b + 350); setShowRechargeModal(false); showToast(t('tokensCredited', { amount: 350 }), 'token'); }}>
-                <span className="pkg-badge">{t('pkgHitBonus')}</span>
-                <div className="pkg-left">
-                  <span className="pkg-amount">350 CR</span>
-                  <span className="pkg-desc">{t('pkgOptimalSet')}</span>
-                </div>
-                <button className="pkg-price-btn accent">{formatPrice(3990)}</button>
-              </div>
-
-              <div className="credit-pkg-card" onClick={() => { setBalance(b => b + 1250); setShowRechargeModal(false); showToast(t('tokensCredited', { amount: 1250 }), 'token'); }}>
-                <span className="pkg-badge vip">{t('pkgVipBonus')}</span>
-                <div className="pkg-left">
-                  <span className="pkg-amount">1250 CR</span>
-                  <span className="pkg-desc">{t('pkgMaxVideo')}</span>
-                </div>
-                <button className="pkg-price-btn">{formatPrice(9990)}</button>
-              </div>
-            </div>
-
-            <div style={{ marginTop: '16px' }}>
-              <PaymentTrustRow compact={true} />
-            </div>
-          </div>
-        </div>
-      )}
+      <RechargeModal
+        isOpen={showRechargeModal}
+        onClose={() => setShowRechargeModal(false)}
+        balance={balance}
+      />
     </div>
   );
 };

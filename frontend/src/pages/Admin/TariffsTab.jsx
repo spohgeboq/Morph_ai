@@ -165,7 +165,7 @@ const TariffsTab = ({ onShowToast }) => {
             </div>
             <div className="welcome-bonus-texts">
               <h4 className="welcome-bonus-title">Приветственный бонус новому пользователю</h4>
-              <p className="welcome-bonus-desc">Количество кредитов, автоматически начисляемых каждому новичку при первом входе</p>
+              <p className="welcome-bonus-desc">Количество единиц CR, автоматически начисляемых каждому новичку при первом входе</p>
             </div>
           </div>
           <div className="welcome-bonus-action">
@@ -188,7 +188,7 @@ const TariffsTab = ({ onShowToast }) => {
         </div>
       </div>
 
-      {/* Блок 2: Таблица пакетов кредитов */}
+      {/* Блок 2: Таблица пакетов генераций */}
       <div className="admin-card">
         <div className="admin-card-header-actions">
           <div>
@@ -210,7 +210,7 @@ const TariffsTab = ({ onShowToast }) => {
               <tr>
                 <th>Порядок</th>
                 <th>Название</th>
-                <th>Кредиты</th>
+                <th>Баланс (CR)</th>
                 <th>Цена (₸)</th>
                 <th>Бейдж</th>
                 <th>Статус</th>
@@ -308,7 +308,7 @@ const TariffsTab = ({ onShowToast }) => {
                       <span className="table-promo-code">{p.code}</span>
                     </td>
                     <td>
-                      {p.type === 'credits' ? 'Бесплатные токены' : 'Скидка на оплату'}
+                      {p.type === 'credits' ? 'Бонусные CR' : 'Скидка на оплату'}
                     </td>
                     <td>
                       {p.type === 'credits' ? (
@@ -366,7 +366,7 @@ const TariffsTab = ({ onShowToast }) => {
         <div className="admin-modal-overlay" onClick={() => setEditingTariff(null)}>
           <div className="admin-modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="admin-modal-header">
-              <h3>{editingTariff.id ? 'Редактирование тарифа' : 'Новый пакет кредитов'}</h3>
+              <h3>{editingTariff.id ? 'Редактирование тарифа' : 'Новый пакет'}</h3>
               <button className="admin-modal-close" onClick={() => setEditingTariff(null)}>
                 <X size={18} />
               </button>
@@ -387,7 +387,7 @@ const TariffsTab = ({ onShowToast }) => {
 
               <div className="admin-form-row">
                 <div className="admin-form-group">
-                  <label>Количество кредитов (CR)</label>
+                  <label>Баланс (CR)</label>
                   <input
                     type="number"
                     value={editingTariff.credits}
@@ -489,7 +489,7 @@ const TariffsTab = ({ onShowToast }) => {
                     onClick={() => setPromoForm({ ...promoForm, type: 'credits' })}
                   >
                     <Coins size={14} />
-                    <span>Бесплатные кредиты (+CR)</span>
+                    <span>Бонус (+CR)</span>
                   </button>
                   <button
                     type="button"
@@ -504,7 +504,7 @@ const TariffsTab = ({ onShowToast }) => {
 
               {promoForm.type === 'credits' ? (
                 <div className="admin-form-group">
-                  <label>Сколько кредитов начислить</label>
+                  <label>Сколько CR начислить</label>
                   <input
                     type="number"
                     value={promoForm.reward_credits}

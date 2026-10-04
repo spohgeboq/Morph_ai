@@ -13,7 +13,7 @@ export const TARIFF_PACKAGES = [
     popular: false,
     description: 'Идеально для знакомства с возможностями генеративного ИИ и быстрого создания первых фото и видео.',
     features: [
-      '100 кредитов на баланс',
+      '100 генераций (CR) на баланс',
       'До 25 портретов студийного качества',
       'До 10 кинематографичных видео (Kling / Hailuo)',
       'Face Swap замена лиц в фото и видео',
@@ -31,7 +31,7 @@ export const TARIFF_PACKAGES = [
     popular: true,
     description: 'Самый сбалансированный пакет для создания полноценных фотосессий и яркого медиаконтента.',
     features: [
-      '350 кредитов на баланс',
+      '350 генераций (CR) на баланс',
       'До 90 фотореалистичных 4K портретов',
       'До 35 видеороликов высокого разрешения',
       'Полный доступ к Студийному фотосету (5 фото)',
@@ -50,7 +50,7 @@ export const TARIFF_PACKAGES = [
     popular: false,
     description: 'Профессиональный тариф для блогеров, креаторов, маркетологов и создания коммерческого контента.',
     features: [
-      '1250 кредитов на баланс',
+      '1250 генераций (CR) на баланс',
       'До 300 портретов в максимальном разрешении',
       'До 125 видео с расширенным хронометражем',
       'Все премиум-модели без ограничений',
@@ -69,17 +69,17 @@ export const TARIFF_PACKAGES = [
     popular: false,
     description: 'Максимальный объем ресурсов для агентств и студий, работающих с масштабным производством медиа.',
     features: [
-      '2500 кредитов на баланс',
+      '2500 генераций (CR) на баланс',
       'Массовая генерация фото и видео 4K',
       'Мгновенная обработка без ожидания',
       'Пакетный запуск фотосессий',
-      'Пожизненный срок действия кредитов',
+      'Бессрочный период действия баланса',
       'Выделенный канал генераций',
     ],
   },
 ];
 
-export const TariffsSection = ({ onSelectPackage, title = 'Тарифные планы и пакеты кредитов', subtitle = 'Выберите подходящий пакет для мгновенного пополнения баланса. Кредиты не сгорают.' }) => {
+export const TariffsSection = ({ onSelectPackage, title = 'Тарифные планы и пакеты генераций', subtitle = 'Выберите подходящий пакет для мгновенного пополнения баланса. Единицы генерации не сгорают.' }) => {
   const [activeModal, setActiveModal] = useState(null);
 
   const handleBuyClick = (pkg) => {
@@ -116,7 +116,7 @@ export const TariffsSection = ({ onSelectPackage, title = 'Тарифные пл
             <div className="tariff-card-pricing">
               <div className="tariff-credits-count">
                 <span className="credits-number">{pkg.credits}</span>
-                <span className="credits-label">CR (кредитов)</span>
+                <span className="credits-label">CR (генераций)</span>
               </div>
               <div className="tariff-price-amount">
                 <span className="price-currency">{pkg.priceKzt.toLocaleString('ru-RU')} ₸</span>

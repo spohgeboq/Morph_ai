@@ -122,7 +122,7 @@ const ModelsTab = ({ onShowToast }) => {
       <div className="admin-tab-header">
         <div>
           <h2 className="admin-tab-title">ИИ Модели, Тарифы и Обложки</h2>
-          <p className="admin-tab-desc">Управляйте стоимостью генерации в кредитах (CR) и фото-обложками всех нейросетей</p>
+          <p className="admin-tab-desc">Управляйте стоимостью генерации в единицах (CR) и фото-обложками всех нейросетей</p>
         </div>
         <button className="admin-refresh-btn" onClick={loadModels} disabled={loading}>
           <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />

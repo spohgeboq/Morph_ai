@@ -87,7 +87,7 @@ export const translations = {
     // Профиль - вкладки и шапка
     tabProfile: 'Профиль',
     tabSettings: 'Настройки',
-    tokenBalance: 'Баланс токенов',
+    tokenBalance: 'Баланс (CR)',
     recharge: 'Пополнить',
     approxHint: 'Хватит на ~{photos} фото или ~{videos} видео',
     
@@ -169,23 +169,23 @@ export const translations = {
 
     // Пополнение
     rechargeModalTitle: 'Пополнение баланса',
-    rechargeModalCredits: 'Пополнение кредитов',
+    rechargeModalCredits: 'Пополнение баланса',
     currentBalance: 'Текущий баланс: {balance} CR',
     pkgStoriesPhotos: 'Для сказок и фото',
     pkgHitBonus: 'ХИТ • +50 В ПОДАРОК',
     pkgOptimalSet: 'Оптимальный набор',
     pkgVipBonus: 'VIP • +250 В ПОДАРОК',
     pkgMaxVideo: 'Максимум видео и музыки',
-    paymentMethodsHint: 'Оплата через Telegram Stars, СБП и банковские карты',
+    paymentMethodsHint: 'Оплата картами Visa и Mastercard (Halyk Bank / Epay)',
     ready: 'Готово',
     prompt: 'Промпт',
     copied: 'Скопировано',
     pack100Hint: '~10 фото / ~8 видео',
     pack350Hint: '~35 фото / ~30 видео',
-    rechargeModalDesc: 'Выберите пакет токенов для доступа к моделям Flux 1.1 Pro и Kling HD:',
+    rechargeModalDesc: 'Выберите пакет для доступа к генерации фото и видео:',
     hitBadge: 'Хит • Выгода 30%',
     vipBadge: 'VIP Запас',
-    tokensCredited: 'Начислено +{amount} кредитов!'
+    tokensCredited: 'Баланс успешно пополнен: +{amount} CR!'
   },
 
   en: {
@@ -272,7 +272,7 @@ export const translations = {
     // Profile
     tabProfile: 'Profile',
     tabSettings: 'Settings',
-    tokenBalance: 'Token Balance',
+    tokenBalance: 'Balance (CR)',
     recharge: 'Top up',
     approxHint: 'Enough for ~{photos} photos or ~{videos} videos',
 
@@ -354,23 +354,23 @@ export const translations = {
 
     // Recharge
     rechargeModalTitle: 'Top Up Balance',
-    rechargeModalCredits: 'Top Up Credits',
+    rechargeModalCredits: 'Top Up Balance',
     currentBalance: 'Current balance: {balance} CR',
     pkgStoriesPhotos: 'For stories & photos',
     pkgHitBonus: 'POPULAR • +50 BONUS',
     pkgOptimalSet: 'Optimal pack',
     pkgVipBonus: 'VIP • +250 BONUS',
     pkgMaxVideo: 'Maximum video & music',
-    paymentMethodsHint: 'Payment via Telegram Stars, Instant Pay & bank cards',
+    paymentMethodsHint: 'Payment via Visa & Mastercard (Halyk Bank / Epay)',
     ready: 'Ready',
     prompt: 'Prompt',
     copied: 'Copied',
     pack100Hint: '~10 photos / ~8 videos',
     pack350Hint: '~35 photos / ~30 videos',
-    rechargeModalDesc: 'Select a token pack for instant access to Flux 1.1 Pro and Kling HD:',
+    rechargeModalDesc: 'Select a package for instant access to Flux 1.1 Pro and Kling HD:',
     hitBadge: 'Popular • Save 30%',
     vipBadge: 'VIP Pack',
-    tokensCredited: '+{amount} credits added!'
+    tokensCredited: '+{amount} CR added!'
   },
 
   kz: {
@@ -457,7 +457,7 @@ export const translations = {
     // Profile
     tabProfile: 'Профиль',
     tabSettings: 'Баптаулар',
-    tokenBalance: 'Токен теңгерімі',
+    tokenBalance: 'Баланс (CR)',
     recharge: 'Толықтыру',
     approxHint: '~{photos} фото немесе ~{videos} бейнеге жетеді',
 
@@ -539,23 +539,23 @@ export const translations = {
 
     // Recharge
     rechargeModalTitle: 'Балансты толтыру',
-    rechargeModalCredits: 'Несиені толтыру',
+    rechargeModalCredits: 'Балансты толтыру',
     currentBalance: 'Ағымдағы теңгерім: {balance} CR',
     pkgStoriesPhotos: 'Ертегілер мен фото үшін',
     pkgHitBonus: 'ХИТ • +50 СЫЙЛЫҚҚА',
     pkgOptimalSet: 'Оңтайлы жинақ',
     pkgVipBonus: 'VIP • +250 СЫЙЛЫҚҚА',
     pkgMaxVideo: 'Максимум бейне мен музыка',
-    paymentMethodsHint: 'Telegram Stars, СБП және банк карталары арқылы төлем',
+    paymentMethodsHint: 'Visa және Mastercard карталары арқылы қауіпсіз төлем',
     ready: 'Дайын',
     prompt: 'Промпт',
     copied: 'Көшірілді',
     pack100Hint: '~10 фото / ~8 бейне',
     pack350Hint: '~35 фото / ~30 бейне',
-    rechargeModalDesc: 'Flux 1.1 Pro және Kling HD модельдеріне кіру үшін токендер пакетін таңдаңыз:',
+    rechargeModalDesc: 'Flux 1.1 Pro және Kling HD модельдеріне қол жеткізу үшін пакетті таңдаңыз:',
     hitBadge: 'Хит • 30% пайда',
     vipBadge: 'VIP Пакет',
-    tokensCredited: '+{amount} несие есептелді!'
+    tokensCredited: '+{amount} CR балансқа қосылды!'
   }
 };
 

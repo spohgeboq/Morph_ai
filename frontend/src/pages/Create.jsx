@@ -6,6 +6,7 @@ import { useCurrency } from '../components/CurrencyContext';
 import { useUser } from '../components/UserContext';
 import { fetchModels, requestGeneration, checkTaskStatus, uploadFileToR2 } from '../services/api';
 import { PaymentTrustRow } from '../components/PaymentBadges';
+import RechargeModal from '../components/RechargeModal';
 import { 
   Search, 
   Sparkles, 
@@ -554,7 +555,7 @@ const Create = () => {
   const handleStartGeneration = async () => {
     if (!userPrompt.trim()) return;
     if (balance < currentCost) {
-      showToast('Недостаточно кредитов! Пополните баланс.', 'error');
+      showToast('Недостаточно средств! Пополните баланс.', 'error');
       setShowRechargeModal(true);
       return;
     }
@@ -911,54 +912,12 @@ const Create = () => {
           </button>
         </div>
 
-        {/* Модалка пополнения кредитов из студии */}
-        {showRechargeModal && (
-          <div className="modal-backdrop" onClick={() => setShowRechargeModal(false)}>
-            <div className="bottom-sheet" onClick={(e) => e.stopPropagation()}>
-              <div className="sheet-header">
-                <div className="sheet-title-info">
-                  <h3>{t('rechargeModalCredits')}</h3>
-                  <span className="sheet-subtitle">{t('currentBalance', { balance })}</span>
-                </div>
-                <button className="sheet-close-btn" onClick={() => setShowRechargeModal(false)}>
-                  <X size={20} />
-                </button>
-              </div>
-
-              <div className="credit-packages">
-                <div className="credit-pkg-card" onClick={() => { setBalance(balance + 100); setShowRechargeModal(false); showToast(t('tokensCredited', { amount: 100 }), 'token'); }}>
-                  <div className="pkg-left">
-                    <span className="pkg-amount">100 CR</span>
-                    <span className="pkg-desc">{t('pkgStoriesPhotos')}</span>
-                  </div>
-                  <button className="pkg-price-btn">{formatPrice(1490)}</button>
-                </div>
-
-                <div className="credit-pkg-card popular" onClick={() => { setBalance(balance + 350); setShowRechargeModal(false); showToast(t('tokensCredited', { amount: 350 }), 'token'); }}>
-                  <span className="pkg-badge">{t('pkgHitBonus')}</span>
-                  <div className="pkg-left">
-                    <span className="pkg-amount">350 CR</span>
-                    <span className="pkg-desc">{t('pkgOptimalSet')}</span>
-                  </div>
-                  <button className="pkg-price-btn accent">{formatPrice(3990)}</button>
-                </div>
-
-                <div className="credit-pkg-card" onClick={() => { setBalance(balance + 1250); setShowRechargeModal(false); showToast(t('tokensCredited', { amount: 1250 }), 'token'); }}>
-                  <span className="pkg-badge vip">{t('pkgVipBonus')}</span>
-                  <div className="pkg-left">
-                    <span className="pkg-amount">1250 CR</span>
-                    <span className="pkg-desc">{t('pkgMaxVideo')}</span>
-                  </div>
-                  <button className="pkg-price-btn">{formatPrice(9990)}</button>
-                </div>
-              </div>
-
-              <div style={{ marginTop: '16px' }}>
-                <PaymentTrustRow compact={true} />
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Модалка пополнения баланса из студии */}
+        <RechargeModal
+          isOpen={showRechargeModal}
+          onClose={() => setShowRechargeModal(false)}
+          balance={balance}
+        />
       </div>
     );
   }
@@ -1283,53 +1242,11 @@ const Create = () => {
       )}
 
       {/* Модалка пополнения баланса */}
-      {showRechargeModal && (
-        <div className="modal-backdrop" onClick={() => setShowRechargeModal(false)}>
-          <div className="bottom-sheet" onClick={(e) => e.stopPropagation()}>
-            <div className="sheet-header">
-              <div className="sheet-title-info">
-                <h3>{t('rechargeModalCredits')}</h3>
-                <span className="sheet-subtitle">{t('currentBalance', { balance })}</span>
-              </div>
-              <button className="sheet-close-btn" onClick={() => setShowRechargeModal(false)}>
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="credit-packages">
-              <div className="credit-pkg-card" onClick={() => { setBalance(balance + 100); setShowRechargeModal(false); showToast(t('tokensCredited', { amount: 100 }), 'token'); }}>
-                <div className="pkg-left">
-                  <span className="pkg-amount">100 CR</span>
-                  <span className="pkg-desc">{t('pkgStoriesPhotos')}</span>
-                </div>
-                <button className="pkg-price-btn">{formatPrice(1490)}</button>
-              </div>
-
-              <div className="credit-pkg-card popular" onClick={() => { setBalance(balance + 350); setShowRechargeModal(false); showToast(t('tokensCredited', { amount: 350 }), 'token'); }}>
-                <span className="pkg-badge">{t('pkgHitBonus')}</span>
-                <div className="pkg-left">
-                  <span className="pkg-amount">350 CR</span>
-                  <span className="pkg-desc">{t('pkgOptimalSet')}</span>
-                </div>
-                <button className="pkg-price-btn accent">{formatPrice(3990)}</button>
-              </div>
-
-              <div className="credit-pkg-card" onClick={() => { setBalance(balance + 1250); setShowRechargeModal(false); showToast(t('tokensCredited', { amount: 1250 }), 'token'); }}>
-                <span className="pkg-badge vip">{t('pkgVipBonus')}</span>
-                <div className="pkg-left">
-                  <span className="pkg-amount">1250 CR</span>
-                  <span className="pkg-desc">{t('pkgMaxVideo')}</span>
-                </div>
-                <button className="pkg-price-btn">{formatPrice(9990)}</button>
-              </div>
-            </div>
-
-            <div style={{ marginTop: '16px' }}>
-              <PaymentTrustRow compact={true} />
-            </div>
-          </div>
-        </div>
-      )}
+      <RechargeModal
+        isOpen={showRechargeModal}
+        onClose={() => setShowRechargeModal(false)}
+        balance={balance}
+      />
     </div>
   );
 };

@@ -188,7 +188,7 @@ const SettingsTab = ({ onShowToast }) => {
                   rows="7"
                   value={broadcastMessage}
                   onChange={(e) => setBroadcastMessage(e.target.value)}
-                  placeholder="✨ Привет! Мы запустили новую модель Kling 3.0. Используйте промокод SPRING20 для получения 50 кредитов!"
+                  placeholder="✨ Привет! Мы запустили новую модель Kling 3.0. Используйте промокод SPRING20 для получения 50 CR бонуса!"
                   className="admin-form-textarea"
                 />
               </div>

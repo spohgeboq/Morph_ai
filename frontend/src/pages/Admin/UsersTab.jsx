@@ -348,7 +348,7 @@ const UsersTab = ({ onShowToast }) => {
 
                 {/* Блок действий поддержки: Начисление баланса */}
                 <div className="admin-card user-actions-box">
-                  <h4 className="user-box-subtitle">Начисление или списание кредитов</h4>
+                  <h4 className="user-box-subtitle">Начисление или списание единиц CR</h4>
                   <div className="quick-add-presets">
                     <button className="quick-add-btn" onClick={() => handleAdjustBalance(25)}>+25 CR</button>
                     <button className="quick-add-btn" onClick={() => handleAdjustBalance(50)}>+50 CR</button>

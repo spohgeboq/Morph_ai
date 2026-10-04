@@ -339,7 +339,7 @@ const Feed = () => {
     if (!remixItem) return;
     const shootCost = Number(remixItem.cost) || 10;
     if (balance < shootCost) {
-      showToast('Недостаточно кредитов для генерации! Пополните баланс.', 'error');
+      showToast('Недостаточно средств для генерации! Пополните баланс.', 'error');
       return;
     }
 
