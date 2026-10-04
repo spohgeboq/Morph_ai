@@ -31,6 +31,9 @@ function AppContent() {
     };
   }, [isAdmin]);
 
+  const isFeed = location.pathname === '/feed';
+  const showFooter = !isAdmin && !isFeed;
+
   return (
     <>
       <Routes>
@@ -45,9 +48,12 @@ function AppContent() {
         <Route path="/terms" element={<Legal />} />
         <Route path="/refund" element={<Legal />} />
         <Route path="/security" element={<Legal />} />
+        <Route path="/delivery" element={<Legal />} />
+        <Route path="/tariffs" element={<Legal />} />
+        <Route path="/pricing" element={<Legal />} />
         <Route path="/contacts" element={<Legal />} />
       </Routes>
-      {!isAdmin && <Footer />}
+      {showFooter && <Footer />}
       {!isAdmin && <BottomNav />}
     </>
   );

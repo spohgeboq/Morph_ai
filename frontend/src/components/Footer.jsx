@@ -46,6 +46,16 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
+                <Link to="/delivery" className="footer-link">
+                  Доставка цифровых услуг
+                </Link>
+              </li>
+              <li>
+                <Link to="/tariffs" className="footer-link">
+                  Тарифы и стоимость
+                </Link>
+              </li>
+              <li>
                 <Link to="/contacts" className="footer-link">
                   Реквизиты и контакты
                 </Link>
@@ -65,14 +75,16 @@ const Footer = () => {
               </div>
               <div className="footer-contact-item">
                 <MapPin size={14} />
-                <span>Республика Казахстан, г. Алматы / г. Астана</span>
+                <span>РК, Карагандинская обл., г. Темиртау, ул. Чернышевского, д. 114, кв. 47</span>
               </div>
               <div className="footer-requisites-box">
                 <span className="req-label">Поставщик услуг:</span>
-                <span className="req-val">ИП / ТОО «Morph AI»</span>
-                <span className="req-label">БИН / ИИН:</span>
-                <span className="req-val">990140001234</span>
-                <span className="req-sub">Режим работы техподдержки: 24/7</span>
+                <span className="req-val">ИП ЖЕЛЕЗНОВА (Железнова Оксана Юрьевна)</span>
+                <span className="req-label">ИИН:</span>
+                <span className="req-val">791109400410</span>
+                <span className="req-label">Уведомление:</span>
+                <span className="req-val">№ KZ41UUZ00570345 от 23.09.2026 г.</span>
+                <span className="req-sub">Служба поддержки пользователей: 24/7</span>
               </div>
             </div>
           </div>
@@ -89,25 +101,25 @@ const Footer = () => {
           </div>
 
           <p className="acquiring-desc">
-            Оплата банковскими картами осуществляется через защищенный платежный шлюз АО «Народный Банк Казахстана» (Halyk Bank / Epay). Наш сервис <strong>не собирает, не передает и не хранит</strong> данные ваших банковских карт (номер карты, срок действия, CVV/CVC-коды). Все расчеты проводятся в строгом соответствии с требованиями международных платежных систем.
+            Оплата банковскими картами осуществляется через защищенный платежный шлюз АО «Народный Банк Казахстана» (Halyk Bank / Epay). Наш сервис <strong>не собирает, не передает и не хранит</strong> данные ваших банковских карт (номер карты, срок действия, CVV/CVC-коды). Все расчеты проводятся в строгом соответствии с требованиями международных платежных систем Visa и Mastercard.
           </p>
 
           <div className="acquiring-logos-container">
             {/* Карточка Visa */}
-            <div className="payment-brand-card visa" title="Visa International">
-              <VisaLogo height={24} />
+            <div className="payment-brand-card visa" title="Visa">
+              <VisaLogo height={26} />
             </div>
 
             {/* Карточка Mastercard */}
-            <div className="payment-brand-card mastercard" title="Mastercard Worldwide">
-              <MastercardLogo height={28} />
+            <div className="payment-brand-card mastercard" title="Mastercard">
+              <MastercardLogo height={30} />
             </div>
 
             {/* Бейджи стандартов безопасности */}
             <div className="security-badges-group">
-              <PciDssBadge height={30} />
-              <ThreeDSecureBadge height={30} />
-              <SslSecureBadge height={30} />
+              <PciDssBadge height={32} />
+              <ThreeDSecureBadge height={32} />
+              <SslSecureBadge height={32} />
             </div>
           </div>
         </div>

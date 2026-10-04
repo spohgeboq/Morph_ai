@@ -34,6 +34,7 @@ import {
 
 import { useUser } from '../components/UserContext';
 import { PaymentTrustRow } from '../components/PaymentBadges';
+import TariffsSection from '../components/TariffsSection';
 import { 
   fetchPublicStories, 
   fetchPublicTemplates, 
@@ -668,6 +669,11 @@ const Home = () => {
           </div>
         </section>
       )}
+
+      {/* 6. ТАРИФНЫЕ ПЛАНЫ И ПАКЕТЫ КРЕДИТОВ (ЭКВАЙРИНГ / БАНКОВСКИЙ КОМПЛАЕНС) */}
+      <section className="home-tariffs-showcase" style={{ padding: '0 20px', maxWidth: '1240px', margin: '40px auto 20px' }}>
+        <TariffsSection />
+      </section>
 
       {/* =========================================================
           ПОЛНОЭКРАННЫЙ ЦЕНТРИРОВАННЫЙ STORIES-ПЛЕЕР С ВИДЕО
