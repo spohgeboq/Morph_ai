@@ -70,11 +70,17 @@ app.use(cors({
     'Accept',
     'Origin',
     'Range',
-    'X-Requested-With'
+    'X-Requested-With',
+    'trbt-signature'
   ],
   exposedHeaders: ['Content-Range', 'X-Content-Range'],
 }));
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({
+  limit: '10mb',
+  verify: (req, res, buf) => {
+    req.rawBody = buf;
+  }
+}));
 
 // ==========================================
 // 2. Регистрация AI-провайдеров

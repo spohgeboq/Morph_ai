@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/api/:path*",
+      "destination": "https://api.morph-ai.asia/api/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/"
     }
