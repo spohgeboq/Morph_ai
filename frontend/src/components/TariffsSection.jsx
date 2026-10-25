@@ -90,11 +90,19 @@ export const TARIFF_PACKAGES = [
 
 export const TariffsSection = ({ onSelectPackage, title = 'Тарифные планы и пакеты генераций', subtitle = 'Выберите подходящий пакет для мгновенного пополнения баланса. Единицы генерации не сгорают.' }) => {
   const [showRechargeModal, setShowRechargeModal] = useState(false);
+  const [selectedTariff, setSelectedTariff] = useState(null);
 
   const handleBuyClick = (pkg) => {
     if (onSelectPackage) {
       onSelectPackage(pkg);
     }
+    setSelectedTariff({
+      id: pkg.id,
+      amount: pkg.totalCredits,
+      title: `${pkg.totalCredits} CR`,
+      name: pkg.name,
+      priceFormatted: `${pkg.priceKzt.toLocaleString('ru-RU').replace(/\s+/g, '\u00A0')}\u00A0₸`,
+    });
     setShowRechargeModal(true);
   };
 
@@ -178,10 +186,14 @@ export const TariffsSection = ({ onSelectPackage, title = 'Тарифные пл
         </div>
       </div>
 
-      {/* Рабочая форма онлайн-оплаты через подключенный эквайринг */}
+      {/* Информационное окно статуса подключения эквайринга */}
       <RechargeModal
         isOpen={showRechargeModal}
-        onClose={() => setShowRechargeModal(false)}
+        initialPackage={selectedTariff}
+        onClose={() => {
+          setShowRechargeModal(false);
+          setSelectedTariff(null);
+        }}
       />
     </div>
   );
