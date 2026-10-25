@@ -372,17 +372,18 @@ h1, h2, h3, h4 {
 
 .photoshoot-editorial-card {
   position: relative;
-  background: radial-gradient(circle at 90% 20%, rgba(255, 77, 141, 0.16) 0%, transparent 55%),
-              linear-gradient(135deg, rgba(32, 16, 36, 0.95) 0%, rgba(18, 12, 22, 0.98) 100%);
-  border: 1px solid rgba(255, 77, 141, 0.32);
-  border-radius: 28px;
-  padding: 24px 22px;
+  background: radial-gradient(circle at 90% 12%, rgba(176, 23, 61, 0.28) 0%, transparent 55%),
+              radial-gradient(circle at 10% 90%, rgba(229, 185, 92, 0.08) 0%, transparent 45%),
+              linear-gradient(145deg, rgba(28, 12, 26, 0.98) 0%, rgba(15, 9, 16, 0.99) 100%);
+  border: 1px solid rgba(176, 23, 61, 0.35);
+  border-radius: 26px;
+  padding: 22px 18px 20px 18px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.15),
-              0 14px 40px rgba(0, 0, 0, 0.55),
-              0 0 28px rgba(255, 77, 141, 0.12);
+  gap: 16px;
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.12),
+              0 14px 36px rgba(0, 0, 0, 0.55),
+              0 0 28px rgba(176, 23, 61, 0.14);
   overflow: hidden;
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
 }
@@ -393,12 +394,12 @@ h1, h2, h3, h4 {
   right: -40px;
   width: 220px;
   height: 220px;
-  background: radial-gradient(circle, rgba(229, 185, 92, 0.18) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(229, 185, 92, 0.16) 0%, transparent 70%);
   pointer-events: none;
   z-index: 0;
 }
 
-.editorial-info-pane {
+.editorial-header-content {
   position: relative;
   z-index: 1;
   display: flex;
@@ -411,16 +412,15 @@ h1, h2, h3, h4 {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 2px;
 }
 
 .editorial-gold-pill {
   background: rgba(229, 185, 92, 0.15);
   border: 1px solid rgba(229, 185, 92, 0.45);
   color: #f7d286;
-  padding: 4px 11px;
+  padding: 4px 10px;
   border-radius: var(--radius-pill);
-  font-size: 0.68rem;
+  font-size: 0.66rem;
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -428,12 +428,12 @@ h1, h2, h3, h4 {
 }
 
 .editorial-cost-tag {
-  background: linear-gradient(135deg, rgba(255, 77, 141, 0.25), rgba(133, 14, 43, 0.35));
-  border: 1px solid rgba(255, 77, 141, 0.5);
+  background: rgba(176, 23, 61, 0.3);
+  border: 1px solid rgba(176, 23, 61, 0.55);
   color: #ff85a2;
-  padding: 4px 11px;
+  padding: 4px 10px;
   border-radius: var(--radius-pill);
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 800;
 }
 
@@ -455,70 +455,119 @@ h1, h2, h3, h4 {
   font-weight: 800;
   color: #ffffff;
   letter-spacing: -0.025em;
-  line-height: 1.2;
+  line-height: 1.22;
 }
 
 .editorial-desc {
   font-size: 0.82rem;
   color: rgba(255, 255, 255, 0.72);
-  line-height: 1.5;
-  margin-top: 2px;
-  max-width: 580px;
+  line-height: 1.45;
 }
 
-/* Строка преимуществ */
-.editorial-perks-row {
+/* Скрываем на мобильном длинные перки */
+.desktop-only {
+  display: none !important;
+}
+
+/* Витринный веер фоток: на мобильном центрирован и прекрасно виден */
+.editorial-fan-showcase {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
-  margin: 6px 0 4px 0;
+  justify-content: center;
+  padding: 4px 0 6px 0;
 }
 
-.editorial-perk {
+.editorial-fan-stack {
+  position: relative;
+  width: 170px;
+  height: 104px;
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.75);
+  justify-content: center;
 }
 
-.editorial-perk-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #e5b95c;
-  box-shadow: 0 0 6px #e5b95c;
+.fan-card {
+  position: absolute;
+  width: 74px;
+  height: 98px;
+  border-radius: 14px;
+  background-size: cover;
+  background-position: center;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease;
 }
 
-/* Действие: кнопка */
-.editorial-action-pane {
-  margin-top: 6px;
+.fan-card.fan-1 {
+  transform: rotate(-13deg) translate(-28px, 4px);
+  z-index: 1;
+  opacity: 0.88;
+}
+
+.fan-card.fan-2 {
+  transform: rotate(13deg) translate(28px, 4px);
+  z-index: 2;
+  opacity: 0.92;
+}
+
+.fan-card.fan-3 {
+  transform: rotate(0deg) translate(0, -3px);
+  z-index: 3;
+  border-color: rgba(229, 185, 92, 0.75);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.85), 0 0 16px rgba(229, 185, 92, 0.28);
+}
+
+.fan-count-badge {
+  position: absolute;
+  bottom: -6px;
+  right: -6px;
+  background: linear-gradient(135deg, #b0173d, #850e2b);
+  border: 1.5px solid rgba(229, 185, 92, 0.6);
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 999px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.6);
+}
+
+/* 3. Кнопка действия (фирменный стиль Morph AI: глубокий бордовый / винный + золотой акцент) */
+.editorial-action-area {
+  position: relative;
+  z-index: 1;
   width: 100%;
 }
 
 .editorial-upload-trigger-btn {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
   width: 100%;
-  padding: 13px 22px;
-  font-size: 0.88rem;
+  padding: 13px 20px;
+  font-size: 0.92rem;
   font-weight: 700;
+  letter-spacing: -0.01em;
   border-radius: var(--radius-pill);
-  background: linear-gradient(135deg, #ff4d8d 0%, #e5b95c 100%);
+  background: linear-gradient(135deg, #b0173d 0%, #850e2b 100%);
+  border: 1px solid rgba(229, 185, 92, 0.4);
   color: #ffffff;
-  box-shadow: 0 8px 24px rgba(255, 77, 141, 0.38);
+  box-shadow: 0 8px 24px rgba(133, 14, 43, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.22);
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  border: none;
 }
 
 .editorial-upload-trigger-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(255, 77, 141, 0.55);
+  background: linear-gradient(135deg, #c71b46 0%, #941031 100%);
+  border-color: rgba(229, 185, 92, 0.65);
+  box-shadow: 0 12px 30px rgba(176, 23, 61, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.3);
+}
+
+.editorial-upload-trigger-btn:active {
+  transform: scale(0.98);
 }
 
 .editorial-ready-row {
@@ -562,13 +611,32 @@ h1, h2, h3, h4 {
 
 .editorial-generate-btn {
   flex: 1;
-  padding: 13px 22px;
-  font-size: 0.88rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 20px;
+  font-size: 0.92rem;
   font-weight: 700;
+  letter-spacing: -0.01em;
   border-radius: var(--radius-pill);
-  background: linear-gradient(135deg, #ff4d8d 0%, #e5b95c 100%);
+  background: linear-gradient(135deg, #b0173d 0%, #850e2b 100%);
+  border: 1px solid rgba(229, 185, 92, 0.4);
   color: #ffffff;
-  box-shadow: 0 8px 24px rgba(255, 77, 141, 0.38);
+  box-shadow: 0 8px 24px rgba(133, 14, 43, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.22);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.editorial-generate-btn:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #c71b46 0%, #941031 100%);
+  border-color: rgba(229, 185, 92, 0.65);
+  box-shadow: 0 12px 30px rgba(176, 23, 61, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.3);
+}
+
+.editorial-generate-btn:active {
+  transform: scale(0.98);
 }
 
 .editorial-btn-content,
@@ -577,120 +645,22 @@ h1, h2, h3, h4 {
   align-items: center;
   justify-content: center;
   gap: 8px;
+  width: 100%;
 }
 
-/* Правая часть: Витринный веер */
-.editorial-showcase-pane {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  z-index: 1;
-}
-
-.editorial-fan-stack {
-  position: relative;
-  width: 110px;
-  height: 105px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.fan-card {
-  position: absolute;
-  width: 66px;
-  height: 88px;
-  border-radius: 14px;
-  background-size: cover;
-  background-position: center;
-  border: 1.5px solid rgba(255, 255, 255, 0.35);
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.7);
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease;
-}
-
-.fan-card.fan-1 {
-  transform: rotate(-14deg) translate(-18px, 4px);
-  z-index: 1;
-  opacity: 0.88;
-}
-
-.fan-card.fan-2 {
-  transform: rotate(14deg) translate(18px, 4px);
-  z-index: 2;
-  opacity: 0.92;
-}
-
-.fan-card.fan-3 {
-  transform: rotate(0deg) translate(0, -3px);
-  z-index: 3;
-  border-color: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.8), 0 0 16px rgba(229, 185, 92, 0.25);
-}
-
-.fan-count-badge {
-  position: absolute;
-  bottom: -6px;
-  right: -6px;
-  background: linear-gradient(135deg, #ff4d8d, #850e2b);
-  color: #ffffff;
-  font-size: 0.65rem;
+.editorial-btn-cost-tag {
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(229, 185, 92, 0.45);
+  color: #f7d286;
+  font-size: 0.72rem;
   font-weight: 800;
-  padding: 2px 7px;
-  border-radius: 999px;
-  border: 1.5px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
-}
-
-.editorial-avatar-thumb {
-  width: 46px;
-  height: 46px;
-  border-radius: 14px;
-  object-fit: cover;
-  border: 2px solid #4ade80;
-}
-
-.editorial-change-photo-btn {
-  position: absolute;
-  bottom: -3px;
-  right: -3px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #000000;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.editorial-generate-btn {
-  flex: 1;
-  padding: 14px 18px;
-  font-size: 0.9rem;
-  font-weight: 700;
+  padding: 3px 8px;
   border-radius: var(--radius-pill);
-  display: flex;
+  letter-spacing: 0.02em;
+  margin-left: 2px;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 8px 24px rgba(176, 23, 61, 0.45);
-}
-
-.editorial-btn-content {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.editorial-progress-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 0.86rem;
-  font-weight: 700;
+  flex-shrink: 0;
 }
 
 /* =========================================================
@@ -12799,17 +12769,48 @@ button:active,
   /* Photoshoot Banner on Desktop: Премиальная 2-колоночная композиция */
   .photoshoot-editorial-card {
     display: grid !important;
+    grid-template-areas:
+      "content fan"
+      "action  fan" !important;
     grid-template-columns: 1fr 280px !important;
     align-items: center !important;
-    gap: 40px !important;
-    padding: 34px 42px !important;
+    gap: 18px 48px !important;
+    padding: 34px 44px !important;
     border-radius: 32px !important;
-    background: radial-gradient(circle at 86% 50%, rgba(255, 77, 141, 0.22) 0%, transparent 60%),
-                linear-gradient(135deg, rgba(32, 16, 36, 0.96) 0%, rgba(18, 12, 22, 0.98) 100%) !important;
+    background: radial-gradient(circle at 86% 50%, rgba(176, 23, 61, 0.28) 0%, transparent 60%),
+                linear-gradient(135deg, rgba(32, 14, 30, 0.98) 0%, rgba(18, 10, 18, 0.99) 100%) !important;
   }
 
-  .editorial-info-pane {
+  .editorial-header-content {
+    grid-area: content !important;
     gap: 12px !important;
+  }
+
+  .desktop-only {
+    display: flex !important;
+  }
+
+  .editorial-perks-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+  }
+
+  .editorial-perk {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .editorial-perk-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #e5b95c;
   }
 
   .editorial-title {
@@ -12822,18 +12823,12 @@ button:active,
     line-height: 1.55 !important;
   }
 
-  .editorial-action-pane {
-    margin-top: 10px !important;
+  .editorial-action-area {
+    grid-area: action !important;
+    margin-top: 6px !important;
   }
 
-  .editorial-upload-trigger-btn {
-    width: fit-content !important;
-    min-width: 290px !important;
-    max-width: 380px !important;
-    padding: 14px 30px !important;
-    font-size: 0.92rem !important;
-  }
-
+  .editorial-upload-trigger-btn,
   .editorial-generate-btn {
     width: fit-content !important;
     min-width: 290px !important;
@@ -12842,8 +12837,10 @@ button:active,
     font-size: 0.92rem !important;
   }
 
-  .editorial-showcase-pane {
+  .editorial-fan-showcase {
+    grid-area: fan !important;
     justify-content: center !important;
+    padding: 0 !important;
   }
 
   .editorial-fan-stack {
