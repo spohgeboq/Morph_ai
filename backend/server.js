@@ -168,7 +168,10 @@ app.get('/api/settings/photoshoot', async (req, res, next) => {
         try { cfg = JSON.parse(cfg); } catch (e) {}
       }
       if (cfg.badge && /^(тест|test)$/i.test(String(cfg.badge).trim())) {
-        cfg.badge = '5 ФОТО В 1 СЕТЕ';
+        cfg.badge = 'Editorial 4K';
+      }
+      if (cfg.desc && /^(тест|test)$/i.test(String(cfg.desc).trim())) {
+        cfg.desc = '5 премиальных 4K-портретов от студийного глянца до уличного лайфстайла из одного селфи';
       }
       return res.json({ config: cfg });
     }

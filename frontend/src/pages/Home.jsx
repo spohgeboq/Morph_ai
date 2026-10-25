@@ -37,12 +37,19 @@ import { PaymentTrustRow } from '../components/PaymentBadges';
 import RechargeModal from '../components/RechargeModal';
 import Footer from '../components/Footer';
 
-// Функция санитизации бейджа студийного фотосета (убираем заглушку "Тест")
+// Функция санитизации бейджа и описания студийного фотосета (убираем заглушку "Тест")
 const cleanPhotoshootBadge = (badge) => {
   if (!badge || /^(тест|test)$/i.test(String(badge).trim())) {
-    return '5 ФОТО В 1 СЕТЕ';
+    return 'Editorial 4K';
   }
   return badge;
+};
+
+const cleanPhotoshootDesc = (desc) => {
+  if (!desc || /^(тест|test)$/i.test(String(desc).trim())) {
+    return '5 премиальных 4K-портретов от студийного глянца до уличного лайфстайла из одного селфи';
+  }
+  return desc;
 };
 import { 
   fetchPublicStories, 
@@ -89,20 +96,21 @@ const Home = () => {
         const parsed = JSON.parse(cached);
         if (parsed && parsed.photos?.length > 0) {
           if (parsed.badge) parsed.badge = cleanPhotoshootBadge(parsed.badge);
+          parsed.desc = cleanPhotoshootDesc(parsed.desc);
           return parsed;
         }
       }
     } catch (e) {}
     return {
-      badge: '5 ФОТО В 1 СЕТЕ',
-      cost: 10,
+      badge: 'Editorial 4K',
+      cost: 15,
       count_badge: '+5',
       title: 'Студийный фотосет',
       desc: '5 премиальных 4K-портретов от студийного глянца до уличного лайфстайла из одного селфи',
       photos: [
-        'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=300&auto=format&fit=crop',
-        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=300&auto=format&fit=crop',
-        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=300&auto=format&fit=crop'
+        'https://pub-b643d21258fd4dd6a6921be37754e98e.r2.dev/photoshoot_fan/1789051495364_8bd109ed.jpg',
+        'https://pub-b643d21258fd4dd6a6921be37754e98e.r2.dev/photoshoot_fan/1789051777180_8a5cd86c.jpg',
+        'https://pub-b643d21258fd4dd6a6921be37754e98e.r2.dev/photoshoot_fan/1789051773531_cc484607.jpg'
       ]
     };
   });
@@ -117,7 +125,11 @@ const Home = () => {
 
     fetchPhotoshootConfig().then(cfg => {
       if (cfg && cfg.photos && cfg.photos.length > 0) {
-        const cleaned = { ...cfg, badge: cleanPhotoshootBadge(cfg.badge) };
+        const cleaned = { 
+          ...cfg, 
+          badge: cleanPhotoshootBadge(cfg.badge),
+          desc: cleanPhotoshootDesc(cfg.desc) 
+        };
         setPhotoshootConfig(cleaned);
         try {
           localStorage.setItem('morphai_photoshoot_config', JSON.stringify(cleaned));
@@ -492,73 +504,95 @@ const Home = () => {
       {/* 3. ПРОФЕССИОНАЛЬНЫЙ СТУДИЙНЫЙ ФОТОСЕТ (EDITORIAL HERO CARD) */}
       <section className="photoshoot-hero-section">
         <div className="photoshoot-editorial-card">
-          {/* Верхняя часть: Заголовок слева + Веер из 3 фоток справа */}
-          <div className="editorial-card-main">
-            <div className="editorial-left-col">
-              <div className="editorial-badge-row">
-                <span className="editorial-gold-pill">{cleanPhotoshootBadge(photoshootConfig.badge) || t('studioBadge')}</span>
-                <span className="editorial-cost-tag">{photoshootConfig.cost || 10} CR</span>
-              </div>
-              <h3>{photoshootConfig.title || t('studioTitle')}</h3>
-              <p>{photoshootConfig.desc || t('studioDesc')}</p>
+          <div className="editorial-card-glow" />
+
+          {/* Левая колонка: Заголовок, описание, фичи и кнопка действия */}
+          <div className="editorial-info-pane">
+            <div className="editorial-badge-row">
+              <span className="editorial-gold-pill">{cleanPhotoshootBadge(photoshootConfig.badge) || 'Editorial 4K'}</span>
+              <span className="editorial-cost-tag">{photoshootConfig.cost || 15} CR</span>
+              <span className="editorial-feature-chip">
+                <Sparkles size={11} color="#e5b95c" />
+                <span>5 образов в 1 сете</span>
+              </span>
             </div>
 
-            {/* Правая часть: стильный веер из 3 накладывающихся карточек */}
-            <div className="editorial-fan-stack">
-              <div className="fan-card fan-1" style={{ backgroundImage: `url(${photoshootConfig.photos?.[0] || 'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=300&auto=format&fit=crop'})` }} />
-              <div className="fan-card fan-2" style={{ backgroundImage: `url(${photoshootConfig.photos?.[1] || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=300&auto=format&fit=crop'})` }} />
-              <div className="fan-card fan-3" style={{ backgroundImage: `url(${photoshootConfig.photos?.[2] || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=300&auto=format&fit=crop'})` }}>
-                <span className="fan-count-badge">{photoshootConfig.count_badge || '+5'}</span>
+            <h3 className="editorial-title">{photoshootConfig.title || t('studioTitle')}</h3>
+            <p className="editorial-desc">{cleanPhotoshootDesc(photoshootConfig.desc)}</p>
+
+            <div className="editorial-perks-row">
+              <div className="editorial-perk">
+                <span className="editorial-perk-dot" />
+                <span>Журнальный глянец</span>
               </div>
+              <div className="editorial-perk">
+                <span className="editorial-perk-dot" />
+                <span>Студийный свет</span>
+              </div>
+              <div className="editorial-perk">
+                <span className="editorial-perk-dot" />
+                <span>Из 1 селфи</span>
+              </div>
+            </div>
+
+            {/* Действие: компактная кнопка загрузки селфи / генерации */}
+            <div className="editorial-action-pane">
+              {photoshootPhoto ? (
+                <div className="editorial-ready-row">
+                  <div className="editorial-avatar-box">
+                    <img src={photoshootPhoto} alt="Uploaded" className="editorial-avatar-thumb" />
+                    <label className="editorial-change-photo-btn" title="Заменить фото">
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handlePhotoshootUpload}
+                        style={{ display: 'none' }}
+                      />
+                      <Camera size={12} />
+                    </label>
+                  </div>
+                  <button 
+                    className="btn-primary editorial-generate-btn"
+                    onClick={handleExecutePhotoshoot}
+                    disabled={isPhotoshootGenerating}
+                  >
+                    {isPhotoshootGenerating ? (
+                      <div className="editorial-progress-row">
+                        <div className="spinner-mini" />
+                        <span>{t('studioGenerating', { step: photoshootStep })}</span>
+                      </div>
+                    ) : (
+                      <div className="editorial-btn-content">
+                        <Sparkles size={16} />
+                        <span>{`Создать 5 фотосессий (${photoshootConfig.cost || 15} CR)`}</span>
+                      </div>
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <label className="btn-primary editorial-upload-trigger-btn">
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handlePhotoshootUpload}
+                    style={{ display: 'none' }}
+                  />
+                  <Camera size={18} />
+                  <span>{`Загрузить селфи и создать 5 фото (${photoshootConfig.cost || 15} CR)`}</span>
+                </label>
+              )}
             </div>
           </div>
 
-          {/* Нижняя часть: компактное действие (загрузка и запуск) */}
-          <div className="editorial-bottom-action">
-            {photoshootPhoto ? (
-              <div className="editorial-ready-row">
-                <div className="editorial-avatar-box">
-                  <img src={photoshootPhoto} alt="Uploaded" className="editorial-avatar-thumb" />
-                  <label className="editorial-change-photo-btn">
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      onChange={handlePhotoshootUpload}
-                      style={{ display: 'none' }}
-                    />
-                    <Camera size={12} />
-                  </label>
-                </div>
-                <button 
-                  className="btn-primary editorial-generate-btn"
-                  onClick={handleExecutePhotoshoot}
-                  disabled={isPhotoshootGenerating}
-                >
-                  {isPhotoshootGenerating ? (
-                    <div className="editorial-progress-row">
-                      <div className="spinner-mini" />
-                      <span>{t('studioGenerating', { step: photoshootStep })}</span>
-                    </div>
-                  ) : (
-                    <div className="editorial-btn-content">
-                      <Sparkles size={16} />
-                      <span>{`Создать 5 фотосессий (${photoshootConfig.cost || 10} CR)`}</span>
-                    </div>
-                  )}
-                </button>
+          {/* Правая колонка: Элегантный витринный веер из 3 фоток */}
+          <div className="editorial-showcase-pane">
+            <div className="editorial-fan-stack">
+              <div className="fan-card fan-1" style={{ backgroundImage: `url(${photoshootConfig.photos?.[0] || 'https://pub-b643d21258fd4dd6a6921be37754e98e.r2.dev/photoshoot_fan/1789051495364_8bd109ed.jpg'})` }} />
+              <div className="fan-card fan-2" style={{ backgroundImage: `url(${photoshootConfig.photos?.[1] || 'https://pub-b643d21258fd4dd6a6921be37754e98e.r2.dev/photoshoot_fan/1789051777180_8a5cd86c.jpg'})` }} />
+              <div className="fan-card fan-3" style={{ backgroundImage: `url(${photoshootConfig.photos?.[2] || 'https://pub-b643d21258fd4dd6a6921be37754e98e.r2.dev/photoshoot_fan/1789051773531_cc484607.jpg'})` }}>
+                <span className="fan-count-badge">{photoshootConfig.count_badge || '+5'}</span>
               </div>
-            ) : (
-              <label className="btn-primary editorial-upload-trigger-btn">
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  onChange={handlePhotoshootUpload}
-                  style={{ display: 'none' }}
-                />
-                <Camera size={18} />
-                <span>{`Загрузить селфи и создать 5 фото (${photoshootConfig.cost || 10} CR)`}</span>
-              </label>
-            )}
+            </div>
           </div>
         </div>
       </section>
