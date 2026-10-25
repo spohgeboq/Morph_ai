@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { VisaLogo, MastercardLogo, PciDssBadge, ThreeDSecureBadge, SslSecureBadge } from './PaymentBadges';
-import { ShieldCheck, FileText, RefreshCw, Lock, HelpCircle, Mail, MapPin } from 'lucide-react';
+import { ShieldCheck, FileText, RefreshCw, Lock, HelpCircle, Mail, MapPin, Phone } from 'lucide-react';
 
 const Footer = () => {
   return (
@@ -70,8 +70,12 @@ const Footer = () => {
             </h4>
             <div className="footer-contacts-info">
               <div className="footer-contact-item">
+                <Phone size={14} />
+                <a href="tel:+77053326990" className="footer-contact-link">+7 705 332 6990</a>
+              </div>
+              <div className="footer-contact-item">
                 <Mail size={14} />
-                <a href="mailto:support@morph-ai.asia" className="footer-contact-link">support@morph-ai.asia</a>
+                <a href="mailto:zlznvoxana@gmail.com" className="footer-contact-link">zlznvoxana@gmail.com</a>
               </div>
               <div className="footer-contact-item">
                 <MapPin size={14} />
@@ -82,6 +86,8 @@ const Footer = () => {
                 <span className="req-val">ИП ЖЕЛЕЗНОВА (Железнова Оксана Юрьевна)</span>
                 <span className="req-label">ИИН:</span>
                 <span className="req-val">791109400410</span>
+                <span className="req-label">Телефон:</span>
+                <span className="req-val"><a href="tel:+77053326990" style={{ color: 'inherit', textDecoration: 'none' }}>+7 705 332 6990</a></span>
                 <span className="req-label">Уведомление:</span>
                 <span className="req-val">№ KZ41UUZ00570345 от 23.09.2026 г.</span>
                 <span className="req-sub">Служба поддержки пользователей: 24/7</span>
@@ -93,7 +99,7 @@ const Footer = () => {
         {/* Разделитель */}
         <div className="footer-divider" />
 
-        {/* ОБЯЗАТЕЛЬНЫЙ БЛОК ДЛЯ ЭКВАЙРИНГА ХАЛЫК БАНКА: ЛОГОТИПЫ VISA И MASTERCARD */}
+        {/* БЛОК ИНТЕРНЕТ-ЭКВАЙРИНГА: ЛОГОТИПЫ КАРТ И БЕЙДЖИ БЕЗОПАСНОСТИ */}
         <div className="footer-acquiring-section">
           <div className="acquiring-heading">
             <ShieldCheck size={18} color="#10b981" />
@@ -101,7 +107,7 @@ const Footer = () => {
           </div>
 
           <p className="acquiring-desc">
-            Оплата банковскими картами осуществляется через защищенный платежный шлюз АО «Народный Банк Казахстана» (Halyk Bank / Epay). Наш сервис <strong>не собирает, не передает и не хранит</strong> данные ваших банковских карт (номер карты, срок действия, CVV/CVC-коды). Все расчеты проводятся в строгом соответствии с требованиями международных платежных систем Visa и Mastercard.
+            Оплата банковскими картами осуществляется через защищенный платежный сервис <strong>Tribute</strong> с полной поддержкой банковских карт Казахстана (Kaspi Gold, Halyk Bank, Jusan, Forte, CenterCredit, Freedom Bank, а также международных карт Visa и Mastercard). Наш сервис <strong>не собирает, не передает и не хранит</strong> данные ваших банковских карт (номер карты, срок действия, CVV/CVC-коды). Все расчеты проводятся в строгом соответствии с требованиями международных стандартов безопасности PCI DSS Level 1 и 3-D Secure.
           </p>
 
           <div className="acquiring-logos-container">

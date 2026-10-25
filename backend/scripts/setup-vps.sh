@@ -82,5 +82,5 @@ sudo ufw --force enable || true
 echo ""
 echo "✅ Базовая настройка завершена!"
 echo "➡️ Для получения бесплатного SSL-сертификата выполните:"
-echo "   sudo certbot --nginx -d api.morph-ai.asia --non-interactive --agree-tos -m support@morph-ai.asia"
+echo "   sudo certbot --nginx -d api.morph-ai.asia --non-interactive --agree-tos -m zlznvoxana@gmail.com"
 echo ""

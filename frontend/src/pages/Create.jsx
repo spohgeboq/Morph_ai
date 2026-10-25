@@ -5,6 +5,7 @@ import { useLanguage } from '../components/LanguageContext';
 import { useCurrency } from '../components/CurrencyContext';
 import { useUser } from '../components/UserContext';
 import { fetchModels, requestGeneration, checkTaskStatus, uploadFileToR2 } from '../services/api';
+import { cleanModelName } from '../utils/modelNames';
 import { PaymentTrustRow } from '../components/PaymentBadges';
 import RechargeModal from '../components/RechargeModal';
 import { 
@@ -23,90 +24,29 @@ import {
   Download,
   Copy,
   RotateCcw,
-  BookOpen
+  BookOpen,
+  Music
 } from 'lucide-react';
 
 // База данных моделей MorphAI (синхронизирована с бэкендом: Видео -> Фото -> Текст)
 export const AI_MODELS_DB = [
   // ==================== 1. ВИДЕО МОДЕЛИ (ПЕРВОЕ МЕСТО) ====================
   {
-    id: 'kling-hd',
-    name: 'Kling AI',
-    category: 'video',
-    preview: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=600&auto=format&fit=crop&q=80',
-    tags: ['1080p', 'Кино'],
-    desc: 'Плавные кинематографичные видео и анимация персонажей',
-    cost: 12,
-    defaultDuration: 6,
-    allowDurationChoice: false,
-    versions: [
-      { id: 'kling-ultra', name: 'Kling 3.0', cost: 16 },
-      { id: 'kling-std', name: 'Kling 1.5 HD', cost: 12 },
-      { id: 'kling-lite', name: 'Kling Fast', cost: 8 },
-    ],
-    aspectRatios: ['16:9', '9:16', '1:1'],
-    samplePrompts: [
-      'Неоновый киберпанк спорткар мчит по ночному Токио под дождем',
-      'Плавный пролет камеры над океанскими скалами'
-    ]
-  },
-  {
-    id: 'hailuo',
-    name: 'Hailuo',
-    category: 'video',
-    preview: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=600&auto=format&fit=crop&q=80',
-    tags: ['Реализм', 'HD'],
-    desc: 'Генерация сверхреалистичных сцен с естественной физикой людей и природы',
-    cost: 14,
-    defaultDuration: 6,
-    allowDurationChoice: false,
-    versions: [
-      { id: 'hailuo-ultra', name: 'Hailuo H3', cost: 16 },
-      { id: 'hailuo-std', name: 'Hailuo H2', cost: 13 },
-      { id: 'hailuo-lite', name: 'Hailuo Lite', cost: 9 },
-    ],
-    aspectRatios: ['16:9', '9:16', '1:1'],
-    samplePrompts: [
-      'Девушка улыбается и поправляет волосы на ветру в цветущем поле',
-      'Золотой орел парит над горным хребтом в лучах утреннего солнца'
-    ]
-  },
-  {
-    id: 'runway-gen4',
-    name: 'GenAi',
-    category: 'video',
-    preview: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
-    tags: ['VFX Кино', 'Slow-Mo'],
-    desc: 'Голливудские спецэффекты и кинематографичное slow-motion',
-    cost: 16,
-    defaultDuration: 6,
-    allowDurationChoice: false,
-    versions: [
-      { id: 'runway-ultra', name: 'Runway Gen-4', cost: 18 },
-      { id: 'runway-std', name: 'Runway Gen-4 Turbo', cost: 15 },
-      { id: 'runway-lite', name: 'Runway Gen-3', cost: 10 },
-    ],
-    aspectRatios: ['16:9', '9:16'],
-    samplePrompts: [
-      'Замедленный взрыв неоновых кристаллов в темноте, осколки света',
-      'Кинематографичная сцена погони в футуристичном мегаполисе'
-    ]
-  },
-  {
     id: 'seedance',
     name: 'Seedance',
     category: 'video',
     preview: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600&auto=format&fit=crop&q=80',
-    tags: ['6–15 сек', 'Анимация'],
-    desc: 'Передовая видеомодель с выбором длительности генерации (6, 10 или 15 сек)',
+    tags: ['ByteDance', '6–15 сек'],
+    desc: 'Передовая видеомодель от ByteDance с гибким выбором длительности (6, 10 или 15 сек)',
     cost: 12,
     defaultDuration: 6,
     allowDurationChoice: true,
     durationOptions: [6, 10, 15],
     versions: [
-      { id: 'seedance-ultra', name: 'Seedance 2.5', cost: 16 },
-      { id: 'seedance-std', name: 'Seedance 2.0', cost: 12 },
-      { id: 'seedance-lite', name: 'Seedance Lite', cost: 8 },
+      { id: 'seedance-2-5', name: 'Seedance 2.5', cost: 16 },
+      { id: 'seedance-2-0', name: 'Seedance 2.0', cost: 12 },
+      { id: 'seedance-1-pro', name: 'Seedance 1.0 Pro', cost: 10 },
+      { id: 'seedance-1-lite', name: 'Seedance 1.0 Lite', cost: 8 },
     ],
     aspectRatios: ['16:9', '9:16', '1:1'],
     samplePrompts: [
@@ -115,64 +55,151 @@ export const AI_MODELS_DB = [
     ]
   },
   {
-    id: 'veo-3-1',
-    name: 'Veo 3.1',
+    id: 'kling-hd',
+    name: 'Kling AI',
     category: 'video',
-    preview: 'https://images.unsplash.com/photo-1536240478700-b869070f9279?w=600&auto=format&fit=crop&q=80',
-    tags: ['Google DeepMind', '4K Кино'],
-    desc: 'Передовая кинематографичная видеомодель от Google с высокой детализацией',
-    cost: 16,
-    defaultDuration: 4,
+    preview: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=600&auto=format&fit=crop&q=80',
+    tags: ['Kuaishou', '1080p Кино'],
+    desc: 'Плавные кинематографичные видео и реалистичная физика движения',
+    cost: 12,
+    defaultDuration: 6,
     allowDurationChoice: false,
     versions: [
-      { id: 'veo-ultra', name: 'Veo 3.1 Pro', cost: 18 },
-      { id: 'veo-std', name: 'Veo 3.1 Standard', cost: 16 },
-      { id: 'veo-lite', name: 'Veo 3.1 Fast', cost: 12 },
+      { id: 'kling-3-0', name: 'Kling 3.0', cost: 16 },
+      { id: 'kling-3-0-omni', name: 'Kling 3.0 Omni', cost: 16 },
+      { id: 'kling-2-6', name: 'Kling 2.6', cost: 14 },
+      { id: 'kling-2-5', name: 'Kling 2.5', cost: 12 },
+      { id: 'kling-1-5', name: 'Kling 1.5 HD', cost: 10 },
+      { id: 'kling-avatar', name: 'Kling AI Avatar', cost: 12 },
+    ],
+    aspectRatios: ['16:9', '9:16', '1:1'],
+    samplePrompts: [
+      'Неоновый киберпанк спорткар мчит по ночному Токио под дождем',
+      'Плавный пролет камеры над океанскими скалами на закате'
+    ]
+  },
+  {
+    id: 'hailuo',
+    name: 'MiniMax H3',
+    category: 'video',
+    preview: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=600&auto=format&fit=crop&q=80',
+    tags: ['MiniMax', 'Реализм'],
+    desc: 'Сверхреалистичная физика людей, мимики, динамики ткани и природных явлений',
+    cost: 14,
+    defaultDuration: 6,
+    allowDurationChoice: false,
+    versions: [
+      { id: 'minimax-h3', name: 'MiniMax H3', cost: 16 },
+      { id: 'minimax-h2', name: 'MiniMax H2 Standard', cost: 13 },
+      { id: 'minimax-lite', name: 'MiniMax Lite', cost: 9 },
+    ],
+    aspectRatios: ['16:9', '9:16', '1:1'],
+    samplePrompts: [
+      'Девушка улыбается и поправляет волосы на ветру в цветущем поле',
+      'Золотой орел парит над горным хребтом в лучах утреннего солнца'
+    ]
+  },
+  {
+    id: 'veo-3-1',
+    name: 'Google Veo',
+    category: 'video',
+    preview: 'https://images.unsplash.com/photo-1536240478700-b869070f9279?w=600&auto=format&fit=crop&q=80',
+    tags: ['Google', '4K Кино'],
+    desc: 'Передовая кинематографичная видеомодель от Google DeepMind с потрясающей детализацией',
+    cost: 16,
+    defaultDuration: 5,
+    allowDurationChoice: false,
+    versions: [
+      { id: 'veo-3-1', name: 'Veo 3.1', cost: 18 },
+      { id: 'veo-3', name: 'Veo 3', cost: 15 },
+      { id: 'veo-3-fast', name: 'Veo 3 Fast', cost: 12 },
     ],
     aspectRatios: ['16:9', '9:16'],
     samplePrompts: [
       'Человек идет по пляжу в ветреную погоду, золотой закат, кинематографичный свет',
-      'Замедленный кинематографичный пролет камеры над неоновым мегаполисом'
+      'Замедленный кинематографичный пролет камеры над футуристичным мегаполисом'
+    ]
+  },
+  {
+    id: 'wan-video',
+    name: 'Wan Video',
+    category: 'video',
+    preview: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=600&auto=format&fit=crop&q=80',
+    tags: ['Alibaba', 'Кинематограф'],
+    desc: 'Флагманская видеомодель от Alibaba с высокой плавностью движения и богатыми текстурами',
+    cost: 14,
+    defaultDuration: 6,
+    allowDurationChoice: false,
+    versions: [
+      { id: 'wan-2-6', name: 'Wan 2.6', cost: 16 },
+      { id: 'wan-2-5', name: 'Wan 2.5', cost: 13 },
+      { id: 'wan-fast', name: 'Wan Fast', cost: 9 },
+    ],
+    aspectRatios: ['16:9', '9:16', '1:1'],
+    samplePrompts: [
+      'Древний восточный храм на вершине туманных гор, восход солнца, 8k',
+      'Кинематографичный пролет дрона над ночным мегаполисом с неоновыми огнями'
+    ]
+  },
+  {
+    id: 'omnihuman',
+    name: 'OmniHuman',
+    category: 'video',
+    preview: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=600&auto=format&fit=crop&q=80',
+    tags: ['ByteDance', 'Avatar'],
+    desc: 'Генерация гиперреалистичных цифровых людей и анимированных аватаров от ByteDance',
+    cost: 15,
+    defaultDuration: 6,
+    allowDurationChoice: false,
+    versions: [
+      { id: 'omnihuman-1-5', name: 'OmniHuman 1.5', cost: 16 },
+      { id: 'omnihuman-std', name: 'OmniHuman', cost: 12 },
+    ],
+    aspectRatios: ['9:16', '16:9', '1:1'],
+    samplePrompts: [
+      'Реалистичный цифровой спикер обращается к аудитории в современной студии',
+      'Эмоциональный портрет человека с естественной живой мимикой'
+    ]
+  },
+  {
+    id: 'runway-gen4',
+    name: 'Runway Gen-4',
+    category: 'video',
+    preview: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
+    tags: ['RunwayML', 'Slow-Mo'],
+    desc: 'Голливудские спецэффекты, передовая кинематографичная физика и slow-motion',
+    cost: 16,
+    defaultDuration: 6,
+    allowDurationChoice: false,
+    versions: [
+      { id: 'runway-ultra', name: 'Runway Gen-4 Turbo', cost: 18 },
+      { id: 'runway-std', name: 'Runway Gen-3 Turbo', cost: 15 },
+    ],
+    aspectRatios: ['16:9', '9:16'],
+    samplePrompts: [
+      'Замедленный взрыв неоновых кристаллов в темноте, осколки света',
+      'Кинематографичная сцена погони в футуристичном мегаполисе'
     ]
   },
 
   // ==================== 2. ФОТО МОДЕЛИ & FACE SWAP ====================
   {
-    id: 'flux-pro',
-    name: 'Flux',
+    id: 'seedream-pro',
+    name: 'Seedream',
     category: 'photo',
-    preview: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&auto=format&fit=crop&q=80',
-    tags: ['8K Фото', 'Портрет'],
-    desc: 'Гиперреалистичные портреты и фото студийного качества',
-    cost: 10,
+    preview: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=600&auto=format&fit=crop&q=80',
+    tags: ['ByteDance', '3D Аватар'],
+    desc: 'Сверхбыстрая генерация концепт-артов, 3D персонажей и ярких аватаров от ByteDance',
+    cost: 6,
     versions: [
-      { id: 'flux-ultra', name: 'Flux 1.1 Pro', cost: 12 },
-      { id: 'flux-std', name: 'Flux Dev', cost: 8 },
-      { id: 'flux-lite', name: 'Flux Schnell', cost: 5 },
-    ],
-    aspectRatios: ['1:1', '9:16', '16:9', '4:5'],
-    samplePrompts: [
-      'Девушка в лучах заката на крыше в Париже, 35mm',
-      'Эстетичный студийный портрет с мягким светом'
-    ]
-  },
-  {
-    id: 'face-swap',
-    name: 'Face Swap',
-    category: 'photo',
-    preview: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600&auto=format&fit=crop&q=80',
-    tags: ['Замена лица', '4K'],
-    desc: 'Высокоточная замена лица на фото и шаблонах с сохранением мимики',
-    cost: 10,
-    versions: [
-      { id: 'fs-ultra', name: 'Face Swap Ultra 4K', cost: 14 },
-      { id: 'fs-std', name: 'Face Swap HD', cost: 10 },
-      { id: 'fs-lite', name: 'Face Swap Lite', cost: 6 },
+      { id: 'sd-5-pro', name: 'Seedream 5 Pro', cost: 8 },
+      { id: 'sd-5-lite', name: 'Seedream 5 Lite', cost: 6 },
+      { id: 'sd-4-0', name: 'Seedream 4.0', cost: 4 },
     ],
     aspectRatios: ['1:1', '9:16', '16:9'],
     samplePrompts: [
-      'Замена лица на портрете в вечернем стиле',
-      'Создание фотореалистичного аватара'
+      '3D персонаж в стиле Pixar, выразительная мимика, детальные текстуры',
+      'Киберпанк самурай в светящихся доспехах'
     ]
   },
   {
@@ -181,12 +208,13 @@ export const AI_MODELS_DB = [
     category: 'photo',
     preview: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80',
     tags: ['OpenAI', 'Фотореализм'],
-    desc: 'Новейшая генерация фотореалистичных изображений студийного качества и сложных композиций',
+    desc: 'Генерация фотореалистичных изображений студийного качества и сложных композиций от OpenAI',
     cost: 10,
     versions: [
-      { id: 'gpt-image-ultra', name: 'GPT Image 2', cost: 12 },
-      { id: 'gpt-image-std', name: 'GPT Image 1.5', cost: 8 },
-      { id: 'gpt-image-lite', name: 'GPT Image 1', cost: 5 },
+      { id: 'gpt-image-2-5', name: 'GPT Image 2.5', cost: 12 },
+      { id: 'gpt-image-2', name: 'GPT Image 2', cost: 10 },
+      { id: 'gpt-image-1-5', name: 'GPT Image 1.5', cost: 7 },
+      { id: 'gpt-image-1', name: 'GPT Image 1', cost: 5 },
     ],
     aspectRatios: ['1:1', '16:9', '9:16', '4:5'],
     samplePrompts: [
@@ -199,13 +227,13 @@ export const AI_MODELS_DB = [
     name: 'Nano Banana',
     category: 'photo',
     preview: 'https://images.unsplash.com/photo-1563089145-599997674d42?w=600&auto=format&fit=crop&q=80',
-    tags: ['Эксклюзив', 'Digital'],
-    desc: 'Креативная генерация ярких digital-артов и дизайн-иллюстраций',
+    tags: ['Google', 'Digital Art'],
+    desc: 'Креативная генерация ярких digital-артов и дизайн-иллюстраций от Google',
     cost: 8,
     versions: [
-      { id: 'nano-ultra', name: 'Nano Banana 2', cost: 10 },
-      { id: 'nano-std', name: 'Nano Banana 1 Pro', cost: 8 },
-      { id: 'nano-lite', name: 'Nano Banana 1', cost: 5 },
+      { id: 'nano-pro', name: 'Nano Banana Pro', cost: 10 },
+      { id: 'nano-2', name: 'Nano Banana 2', cost: 8 },
+      { id: 'nano-std', name: 'Nano Banana', cost: 5 },
     ],
     aspectRatios: ['1:1', '9:16', '16:9', '4:5'],
     samplePrompts: [
@@ -214,22 +242,78 @@ export const AI_MODELS_DB = [
     ]
   },
   {
-    id: 'seedream-pro',
-    name: 'Seedream',
+    id: 'flux-pro',
+    name: 'Flux',
     category: 'photo',
-    preview: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=600&auto=format&fit=crop&q=80',
-    tags: ['3D Аватар', 'Турбо'],
-    desc: 'Сверхбыстрая генерация концепт-артов и мультяшных аватаров',
-    cost: 6,
+    preview: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&auto=format&fit=crop&q=80',
+    tags: ['Black Forest', '8K Фото'],
+    desc: 'Гиперреалистичные портреты и студийные кадры от Black Forest Labs',
+    cost: 10,
     versions: [
-      { id: 'sd-ultra', name: 'Seedream 5.0 Pro', cost: 8 },
-      { id: 'sd-std', name: 'Seedream 5.0 Lite', cost: 6 },
-      { id: 'sd-lite', name: 'Seedream 4.0', cost: 4 },
+      { id: 'flux-1-1-pro', name: 'Flux 1.1 Pro', cost: 12 },
+      { id: 'flux-kontext', name: 'Flux Kontext', cost: 10 },
+      { id: 'flux-dev', name: 'Flux Dev', cost: 8 },
+      { id: 'flux-schnell', name: 'Flux Schnell', cost: 5 },
+    ],
+    aspectRatios: ['1:1', '9:16', '16:9', '4:5'],
+    samplePrompts: [
+      'Девушка в лучах заката на крыше в Париже, 35mm film',
+      'Эстетичный студийный портрет с мягким объемным светом'
+    ]
+  },
+  {
+    id: 'qwen-image',
+    name: 'Qwen Image',
+    category: 'photo',
+    preview: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=600&auto=format&fit=crop&q=80',
+    tags: ['Alibaba', 'Иллюстрации'],
+    desc: 'Передовая генерация детализированных концепт-артов и живописных иллюстраций от Alibaba',
+    cost: 8,
+    versions: [
+      { id: 'qwen-2-1', name: 'Qwen Image 2.1', cost: 8 },
+      { id: 'qwen-std', name: 'Qwen Image', cost: 6 },
     ],
     aspectRatios: ['1:1', '9:16', '16:9'],
     samplePrompts: [
-      '3D персонаж в стиле Pixar, выразительная мимика',
-      'Киберпанк самурай в неоновых доспехах'
+      'Традиционный китайский сад в утреннем тумане, акварельный стиль с золотом',
+      'Фантастический город будущего в лучах заходящего солнца'
+    ]
+  },
+  {
+    id: 'z-image-turbo',
+    name: 'Z-Image Turbo',
+    category: 'photo',
+    preview: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=600&auto=format&fit=crop&q=80',
+    tags: ['Alibaba', 'Турбо-скорость'],
+    desc: 'Сверхбыстрая генерация изображений высокой четкости за считанные секунды',
+    cost: 6,
+    versions: [
+      { id: 'z-image-turbo', name: 'Z-Image Turbo', cost: 6 },
+      { id: 'z-image-std', name: 'Z-Image Standard', cost: 4 },
+    ],
+    aspectRatios: ['1:1', '9:16', '16:9'],
+    samplePrompts: [
+      'Спортивный автомобиль будущего на высокой скорости, динамичные неоновые полосы',
+      'Концепт современного минималистичного интерьера с видом на горы'
+    ]
+  },
+  {
+    id: 'face-swap',
+    name: 'Face Swap',
+    category: 'photo',
+    preview: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600&auto=format&fit=crop&q=80',
+    tags: ['Замена лица', '4K'],
+    desc: 'Высокоточная замена лица на фото и шаблонах с полным сохранением мимики',
+    cost: 10,
+    versions: [
+      { id: 'fs-ultra', name: 'Face Swap Ultra 4K', cost: 14 },
+      { id: 'fs-std', name: 'Face Swap HD', cost: 10 },
+      { id: 'fs-lite', name: 'Face Swap Lite', cost: 6 },
+    ],
+    aspectRatios: ['1:1', '9:16', '16:9'],
+    samplePrompts: [
+      'Замена лица на портрете в вечернем стиле',
+      'Создание фотореалистичного аватара'
     ]
   },
 
@@ -240,7 +324,7 @@ export const AI_MODELS_DB = [
     roleTitle: 'Сказки',
     category: 'text',
     preview: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
-    tags: ['Сказки', 'Притчи'],
+    tags: ['OpenAI', 'Сказки'],
     desc: 'Добрые сказки на ночь, волшебные миры и поучительные притчи со смыслом',
     cost: 3,
     versions: [
@@ -260,7 +344,7 @@ export const AI_MODELS_DB = [
     roleTitle: 'Мистика',
     category: 'text',
     preview: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=600&auto=format&fit=crop&q=80',
-    tags: ['Мистика', 'Тайны'],
+    tags: ['Anthropic', 'Тайны'],
     desc: 'Загадочные мистические истории, городские легенды, саспенс и детективные тайны',
     cost: 3,
     versions: [
@@ -280,7 +364,7 @@ export const AI_MODELS_DB = [
     roleTitle: 'Sci-Fi',
     category: 'text',
     preview: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&auto=format&fit=crop&q=80',
-    tags: ['Космос', 'Sci-Fi'],
+    tags: ['Google', 'Sci-Fi'],
     desc: 'Научно-фантастические саги, киберпанк, космические одиссеи и хроники далеких миров',
     cost: 2,
     versions: [
@@ -300,7 +384,7 @@ export const AI_MODELS_DB = [
     roleTitle: 'Эпос',
     category: 'text',
     preview: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
-    tags: ['Приключения', 'Эпос'],
+    tags: ['Meta', 'Эпос'],
     desc: 'Захватывающие странствия, поиск сокровищ, древние воины и рыцарские романы',
     cost: 1,
     versions: [
@@ -410,6 +494,9 @@ const Create = () => {
           'veo3.1': 'veo-3-1',
           'veo-3.1': 'veo-3-1',
           'veo-3-1': 'veo3.1',
+          'wan': 'wan-video',
+          'wanx': 'wan-video',
+          'minimax': 'hailuo',
         };
 
         const merged = baseList
@@ -423,16 +510,22 @@ const Create = () => {
             if (serverModel.is_active === false) return null;
 
             const finalCover = serverModel.preview_url || serverModel.preview || base.preview || getModelFallback(base.category);
+            const rawVersions = (Array.isArray(serverModel.versions) && serverModel.versions.length > 0) ? serverModel.versions : (base.versions || []);
+            const sanitizedVersions = rawVersions.map(v => ({
+              ...v,
+              name: cleanModelName(v.name)
+            }));
+
             return {
               ...base,
               ...serverModel,
               id: serverModel.id || base.id,
-              name: serverModel.name || base.name,
+              name: cleanModelName(serverModel.name || base.name),
               preview: finalCover,
               preview_url: finalCover,
               desc: serverModel.description || serverModel.desc || base.desc,
               cost: serverModel.cost !== undefined ? serverModel.cost : base.cost,
-              versions: (Array.isArray(serverModel.versions) && serverModel.versions.length > 0) ? serverModel.versions : base.versions,
+              versions: sanitizedVersions,
               tags: (Array.isArray(serverModel.tags) && serverModel.tags.length > 0) ? serverModel.tags : base.tags,
               aspectRatios: base.aspectRatios || ['16:9', '9:16', '1:1'],
               samplePrompts: base.samplePrompts || [],
@@ -450,11 +543,18 @@ const Create = () => {
           .map(m => {
             const fallback = getModelFallback(m.category);
             const cover = m.preview_url || m.preview || fallback;
+            const rawVersions = Array.isArray(m.versions) ? m.versions : [];
+            const sanitizedVersions = rawVersions.map(v => ({
+              ...v,
+              name: cleanModelName(v.name)
+            }));
             return {
               ...m,
+              name: cleanModelName(m.name),
               preview: cover,
               preview_url: cover,
               desc: m.description || m.desc || '',
+              versions: sanitizedVersions,
               aspectRatios: ['16:9', '9:16', '1:1'],
               samplePrompts: [],
             };
@@ -479,6 +579,8 @@ const Create = () => {
       setTimeout(() => {
         if (location.state.category === 'text') {
           textSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else if (location.state.category === 'audio') {
+          audioSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         } else if (location.state.category === 'photo') {
           photoSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         } else {
@@ -596,8 +698,8 @@ const Create = () => {
         id: 'chat_' + (res.task_id || Date.now()),
         title: userPrompt.trim().slice(0, 35) || 'Генерация',
         modelId: selectedModel.id,
-        modelName: selectedModel.name,
-        versionName: selectedVersion?.name || selectedModel.name,
+        modelName: cleanModelName(selectedModel.name),
+        versionName: cleanModelName(selectedVersion?.name || selectedModel.name),
         cost: currentCost,
         category: selectedModel.category,
         time: 'Только что',
@@ -661,7 +763,7 @@ const Create = () => {
       <div className="studio-page-wrapper">
         <header className="studio-top-bar">
           <button className="studio-back-btn" onClick={() => setSelectedModel(null)}><ArrowLeft size={18} /></button>
-          <div className="studio-title-badge"><span className="studio-model-name">{selectedVersion ? selectedVersion.name : selectedModel.name}</span></div>
+          <div className="studio-title-badge"><span className="studio-model-name">{cleanModelName(selectedVersion ? selectedVersion.name : selectedModel.name)}</span></div>
           <div className="balance-capsule" onClick={() => setShowRechargeModal(true)}>
             <div className="balance-info"><span className="balance-amount">{balance}</span></div>
             <button className="balance-add-btn"><Plus size={12} strokeWidth={3} /></button>
@@ -671,7 +773,7 @@ const Create = () => {
         {isText ? (
           <div className="story-studio-hero">
             <div className="story-hero-badge"><BookOpen size={13} color="rgba(255, 255, 255, 0.85)" /><span>Литературный ИИ • {selectedModel.roleTitle || 'Мастер историй'}</span></div>
-            <h2 className="story-hero-title">{selectedModel.name}</h2>
+            <h2 className="story-hero-title">{cleanModelName(selectedModel.name)}</h2>
             <p className="story-hero-desc">{selectedModel.desc}</p>
           </div>
         ) : (
@@ -708,7 +810,7 @@ const Create = () => {
                 <div className="canvas-top-tag">{isVideo ? <Film size={12} color="rgba(255, 255, 255, 0.85)" /> : <Camera size={12} color="rgba(255, 255, 255, 0.85)" />}<span>{selectedRatio}</span></div>
                 <div className="canvas-center-brand">
                   <div className="canvas-brand-icon">{isVideo ? <Play size={20} fill="currentColor" color="rgba(255, 255, 255, 0.9)" /> : <Camera size={20} color="rgba(255, 255, 255, 0.9)" />}</div>
-                  <h4 className="canvas-brand-name">{selectedVersion ? selectedVersion.name : selectedModel.name}</h4>
+                  <h4 className="canvas-brand-name">{cleanModelName(selectedVersion ? selectedVersion.name : selectedModel.name)}</h4>
                 </div>
                 <div className="canvas-bottom-tag">{isVideo ? (<span>{selectedModel.allowDurationChoice ? `${videoDuration} сек` : '6 сек'} • Высокое качество</span>) : (<span>Студийное качество • 4K</span>)}</div>
               </div>
@@ -721,7 +823,7 @@ const Create = () => {
             <div className="section-label-row">
               <label className="studio-section-label">Версия модели</label>
               {selectedVersion && (
-                <span className="char-counter">{selectedVersion.name}</span>
+                <span className="char-counter">{cleanModelName(selectedVersion.name)}</span>
               )}
             </div>
             <div className="tier-pills-row" style={{ gridTemplateColumns: `repeat(${selectedModel.versions.length}, 1fr)` }}>
@@ -731,7 +833,7 @@ const Create = () => {
                   className={`tier-pill ${selectedVersion?.id === ver.id ? 'active' : ''}`} 
                   onClick={() => setSelectedVersion(ver)}
                 >
-                  <span className="tier-name">{ver.name}</span>
+                  <span className="tier-name">{cleanModelName(ver.name)}</span>
                   <span className="tier-cost">{ver.cost} CR</span>
                 </button>
               ))}
@@ -754,7 +856,7 @@ const Create = () => {
                 ))}
               </div>
             ) : (
-              <div className="fixed-duration-pill"><Clock size={16} color="rgba(255, 255, 255, 0.7)" /><span className="duration-fixed-text">6 секунд</span><span className="duration-fixed-note">Стандарт для {selectedModel.name}</span></div>
+              <div className="fixed-duration-pill"><Clock size={16} color="rgba(255, 255, 255, 0.7)" /><span className="duration-fixed-text">6 секунд</span><span className="duration-fixed-note">Стандарт для {cleanModelName(selectedModel.name)}</span></div>
             )}
             <div className="studio-section">
               <label className="studio-section-label">Пропорции видео</label>
@@ -1041,8 +1143,10 @@ const Create = () => {
                   </div>
                   <div className="model-info-col">
                     <div className="model-title-row">
-                      <span className="model-name">{model.name}</span>
-                      <span className="model-versions-count-badge">3 версии</span>
+                      <span className="model-name">{cleanModelName(model.name)}</span>
+                      <span className="model-versions-count-badge">
+                        {model.versions ? `${model.versions.length} версии` : '3 версии'}
+                      </span>
                     </div>
                     <div className="model-tags-row">
                       {model.tags && model.tags.map((tag, i) => (
@@ -1093,8 +1197,10 @@ const Create = () => {
                   </div>
                   <div className="model-info-col">
                     <div className="model-title-row">
-                      <span className="model-name">{model.name}</span>
-                      <span className="model-versions-count-badge">3 версии</span>
+                      <span className="model-name">{cleanModelName(model.name)}</span>
+                      <span className="model-versions-count-badge">
+                        {model.versions ? `${model.versions.length} версии` : '3 версии'}
+                      </span>
                     </div>
                     <div className="model-tags-row">
                       {model.tags && model.tags.map((tag, i) => (
@@ -1145,7 +1251,7 @@ const Create = () => {
                   </div>
                   <div className="model-info-col">
                     <div className="model-title-row">
-                      <span className="model-name">{model.name}</span>
+                      <span className="model-name">{cleanModelName(model.name)}</span>
                       <span className="model-versions-count-badge">3 версии</span>
                     </div>
                     <div className="model-tags-row">
@@ -1199,7 +1305,7 @@ const Create = () => {
 
                 <div className="model-info-col">
                   <div className="model-title-row">
-                    <span className="model-name">{model.name}</span>
+                    <span className="model-name">{cleanModelName(model.name)}</span>
                     {model.versions && model.versions.length > 0 && (
                       <span className="model-versions-count-badge">3 версии</span>
                     )}

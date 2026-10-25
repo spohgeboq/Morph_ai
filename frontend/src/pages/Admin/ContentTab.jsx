@@ -64,7 +64,7 @@ const ContentTab = ({ onShowToast }) => {
   const [isSavingPhotoshoot, setIsSavingPhotoshoot] = useState(false);
   const [photoshoot, setPhotoshoot] = useState({
     cost: 10,
-    badge: 'Editorial 4K',
+    badge: '5 ФОТО В 1 СЕТЕ',
     count_badge: '+5',
     title: 'Студийный фотосет',
     desc: '5 премиальных 4K-портретов от студийного глянца до уличного лайфстайла из одного селфи',
@@ -88,12 +88,13 @@ const ContentTab = ({ onShowToast }) => {
       setStories(storiesData || []);
       setAvailableModels(Array.isArray(modelsData) ? modelsData : []);
       if (psData) {
+        const cleanBadge = (b) => (!b || /^(тест|test)$/i.test(String(b).trim()) ? '5 ФОТО В 1 СЕТЕ' : b);
         setPhotoshoot(prev => ({
           ...prev,
           ...psData,
           title: psData.title || prev.title,
           desc: psData.desc || prev.desc,
-          badge: psData.badge || prev.badge,
+          badge: cleanBadge(psData.badge || prev.badge),
           cost: psData.cost !== undefined ? psData.cost : prev.cost,
           count_badge: psData.count_badge || prev.count_badge,
           photos: (Array.isArray(psData.photos) && psData.photos.length >= 3) ? psData.photos : prev.photos

@@ -499,9 +499,10 @@ const Chats = () => {
           </div>
         </div>
       ) : (
-        /* 3. СПИСОК ЧАТОВ (ВАРИАНТ А: ИНТЕЛЛЕКТУАЛЬНЫЕ МЕДИА-КАРТОЧКИ) */
-        <>
-          {/* Фильтры категорий */}
+        /* 3. СПИСОК ЧАТОВ + СПЛИТ-ЭКРАН ДЛЯ ДЕСКТОПА */
+        <div className="chats-split-layout">
+          <div className="chats-list-pane">
+            {/* Фильтры категорий */}
           <div className="chats-filter-tabs">
             <button 
               className={`chats-filter-tab ${activeTab === 'all' ? 'active' : ''}`}
@@ -597,12 +598,12 @@ const Chats = () => {
               </div>
             )}
           </div>
-        </>
-      )}
+        </div>
 
-      {/* 4. ПОЛНОЭКРАННОЕ ОКНО СЕССИИ ДИАЛОГА (INSIDE CHAT VIEWER - ИДЕЯ 3) */}
-      {activeChat && (
-        <div className="chat-session-viewer-overlay">
+        {/* 4. ПРАВАЯ КОЛОНКА / ПОЛНОЭКРАННОЕ ОКНО ДИАЛОГА */}
+        <div className="chats-detail-pane">
+          {activeChat ? (
+            <div className="chat-session-viewer-overlay">
           {/* Шапка окна сессии */}
           <header className="session-viewer-header">
             <button 
@@ -818,7 +819,24 @@ const Chats = () => {
             </div>
           </div>
         </div>
+      ) : (
+        <div className="chat-desktop-empty-placeholder">
+          <div className="desktop-chat-placeholder-content">
+            <div className="desktop-chat-placeholder-icon">
+              <MessageSquare size={38} color="#e5b95c" />
+            </div>
+            <h3>Диалоги и результаты</h3>
+            <p>Выберите диалог из списка слева, чтобы просмотреть результаты генерации или продолжить диалог с нейросетью.</p>
+            <button className="btn-primary" onClick={handleGoCreate}>
+              <Plus size={16} />
+              <span>Создать новую генерацию</span>
+            </button>
+          </div>
+        </div>
       )}
+    </div>
+  </div>
+)}
 
       {/* 5. МОДАЛЬНОЕ ОКНО ПОПОЛНЕНИЯ БАЛАНСА */}
       <RechargeModal

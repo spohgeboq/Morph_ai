@@ -5,10 +5,23 @@ const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(() => {
-    const cached = localStorage.getItem('morphai_cached_user');
-    return cached ? JSON.parse(cached) : getTelegramUser();
+    try {
+      const cached = localStorage.getItem('morphai_cached_user');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && (parsed.id === 123456789 || parsed.telegram_id === 123456789 || parsed.username === 'MorphUser' || parsed.is_mock)) {
+          localStorage.removeItem('morphai_cached_user');
+          localStorage.removeItem('morphai_local_user');
+          return null;
+        }
+        return parsed;
+      }
+    } catch (e) {}
+    return getTelegramUser();
   });
-  const [balance, setBalance] = useState(50);
+  const [balance, setBalance] = useState(() => {
+    return currentUser?.balance ?? 0;
+  });
   const [loading, setLoading] = useState(true);
 
   // Инициализация Telegram WebApp
@@ -23,14 +36,23 @@ export const UserProvider = ({ children }) => {
     }
   }, []);
 
-  // Синхронизация с сервером при старте (авто-регистрация без кликов)
+  // Синхронизация с сервером при старте (только для реальных пользователей Telegram)
   const refreshUser = useCallback(async () => {
     try {
+      const tgUser = getTelegramUser();
+      if (!tgUser || !tgUser.id || tgUser.is_mock || tgUser.id === 123456789) {
+        setCurrentUser(null);
+        setBalance(0);
+        return;
+      }
       const user = await syncUser();
-      if (user) {
+      if (user && user.id) {
         setCurrentUser(user);
         setBalance(user.balance ?? 50);
         localStorage.setItem('morphai_cached_user', JSON.stringify(user));
+      } else {
+        setCurrentUser(null);
+        setBalance(0);
       }
     } catch (err) {
       console.error('[UserContext] Error refreshing user:', err);
@@ -47,10 +69,21 @@ export const UserProvider = ({ children }) => {
   const updateBalance = (newBalance) => {
     setBalance(newBalance);
     setCurrentUser((prev) => {
+      if (!prev) return null;
       const updated = { ...prev, balance: newBalance };
       localStorage.setItem('morphai_cached_user', JSON.stringify(updated));
       return updated;
     });
+  };
+
+  // Выход из профиля
+  const logout = () => {
+    try {
+      localStorage.removeItem('morphai_cached_user');
+      localStorage.removeItem('morphai_local_user');
+    } catch (e) {}
+    setCurrentUser(null);
+    setBalance(0);
   };
 
   // Ручная или быстрая авторизация через Telegram (для веб-версии)
@@ -61,6 +94,7 @@ export const UserProvider = ({ children }) => {
       if (user) {
         setCurrentUser(user);
         setBalance(user.balance ?? 50);
+        localStorage.setItem('morphai_cached_user', JSON.stringify(user));
         return user;
       }
     } catch (err) {
@@ -79,6 +113,7 @@ export const UserProvider = ({ children }) => {
         setBalance: updateBalance,
         refreshUser,
         loginViaTelegram,
+        logout,
         loading,
       }}
     >

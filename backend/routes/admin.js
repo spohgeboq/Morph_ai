@@ -177,18 +177,28 @@ router.get('/tariffs', async (req, res, next) => {
 
 router.post('/tariffs', async (req, res, next) => {
   try {
-    const { name, credits, price_rub, badge, sort_order, is_active } = req.body;
+    const { name, credits, price_rub, badge, sort_order, is_active, tribute_url } = req.body;
     if (!name || !credits || !price_rub) {
       return res.status(400).json({ error: true, message: 'Название, кредиты и цена обязательны' });
     }
 
-    const result = await db.query(
-      `INSERT INTO credit_packages (name, credits, price_rub, badge, sort_order, is_active)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING *`,
-      [name, credits, price_rub, badge || null, sort_order || 0, is_active !== false]
-    );
-    res.status(201).json({ tariff: result.rows[0] });
+    try {
+      const result = await db.query(
+        `INSERT INTO credit_packages (name, credits, price_rub, badge, sort_order, is_active, tribute_url)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING *`,
+        [name, Number(credits), Number(price_rub), badge || null, Number(sort_order) || 0, is_active !== false, tribute_url || null]
+      );
+      return res.status(201).json({ tariff: result.rows[0] });
+    } catch (colErr) {
+      const result = await db.query(
+        `INSERT INTO credit_packages (name, credits, price_rub, badge, sort_order, is_active)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING *`,
+        [name, Number(credits), Number(price_rub), badge || null, Number(sort_order) || 0, is_active !== false]
+      );
+      return res.status(201).json({ tariff: result.rows[0] });
+    }
   } catch (error) {
     next(error);
   }
@@ -196,19 +206,36 @@ router.post('/tariffs', async (req, res, next) => {
 
 router.put('/tariffs/:id', async (req, res, next) => {
   try {
-    const { name, credits, price_rub, badge, sort_order, is_active } = req.body;
-    const result = await db.query(
-      `UPDATE credit_packages
-       SET name = COALESCE($1, name),
-           credits = COALESCE($2, credits),
-           price_rub = COALESCE($3, price_rub),
-           badge = $4,
-           sort_order = COALESCE($5, sort_order),
-           is_active = COALESCE($6, is_active)
-       WHERE id = $7
-       RETURNING *`,
-      [name, credits, price_rub, badge, sort_order, is_active, req.params.id]
-    );
+    const { name, credits, price_rub, badge, sort_order, is_active, tribute_url } = req.body;
+    let result;
+    try {
+      result = await db.query(
+        `UPDATE credit_packages
+         SET name = COALESCE($1, name),
+             credits = COALESCE($2, credits),
+             price_rub = COALESCE($3, price_rub),
+             badge = $4,
+             sort_order = COALESCE($5, sort_order),
+             is_active = COALESCE($6, is_active),
+             tribute_url = COALESCE($7, tribute_url)
+         WHERE id = $8
+         RETURNING *`,
+        [name, credits !== undefined ? Number(credits) : null, price_rub !== undefined ? Number(price_rub) : null, badge, sort_order !== undefined ? Number(sort_order) : null, is_active, tribute_url, req.params.id]
+      );
+    } catch (colErr) {
+      result = await db.query(
+        `UPDATE credit_packages
+         SET name = COALESCE($1, name),
+             credits = COALESCE($2, credits),
+             price_rub = COALESCE($3, price_rub),
+             badge = $4,
+             sort_order = COALESCE($5, sort_order),
+             is_active = COALESCE($6, is_active)
+         WHERE id = $7
+         RETURNING *`,
+        [name, credits !== undefined ? Number(credits) : null, price_rub !== undefined ? Number(price_rub) : null, badge, sort_order !== undefined ? Number(sort_order) : null, is_active, req.params.id]
+      );
+    }
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: true, message: 'Тариф не найден' });

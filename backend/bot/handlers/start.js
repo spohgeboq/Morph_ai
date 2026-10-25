@@ -35,23 +35,19 @@ function setupStartHandler(bot) {
           `✅ Вы авторизованы. Баланс: *${dbUser.balance} CR*\n\n`;
 
       const description =
-        '🤖 Я — ваш мультимодальный ИИ-хаб:\n\n' +
-        '📸 *Фотостудия 4K* — Flux, DALL-E 3, Imagen 3, Seedream\n' +
-        '🎬 *Видео* — Kling AI, Hailuo, Luma, Runway, Seedance\n' +
-        '✍️ *Текст & Истории* — GPT-4o, Claude, Gemini, Llama 3\n' +
-        '🔄 *Face Swap* — замена лиц в видео и портретах\n\n' +
-        'Запустите веб-приложение или выберите действие ниже 👇';
+        '🎨 Нейросетевая студия нового поколения: генерация фото, 4K видео, тексты и Face Swap.\n\n' +
+        'Нажмите кнопку ниже для запуска веб-студии 👇';
 
       const webAppUrl = process.env.TELEGRAM_WEBAPP_URL || process.env.CLIENT_URL || 'https://morph-ai.asia';
 
-      // Принудительно обновляем кнопку меню для этого пользователя (актуально для мобильных)
+      // Принудительно обновляем кнопку меню для этого пользователя на Mini App
       if (webAppUrl && webAppUrl.startsWith('https://')) {
         try {
           await bot.setChatMenuButton({
             chat_id: chatId,
             menu_button: {
               type: 'web_app',
-              text: '✨ MorphAI Studio',
+              text: '🚀 MorphAI Studio',
               web_app: { url: webAppUrl },
             },
           });
@@ -70,8 +66,8 @@ function setupStartHandler(bot) {
     }
   });
 
-  // Команда /app или /webapp или /login
-  bot.onText(/\/app|\/webapp|\/login|\/auth/, async (msg) => {
+  // Любые текстовые команды перенаправляют в Mini App
+  bot.onText(/\/app|\/webapp|\/login|\/auth|\/help|\/balance|\/menu/, async (msg) => {
     const webAppUrl = process.env.TELEGRAM_WEBAPP_URL || process.env.CLIENT_URL || 'https://morph-ai.asia';
     const keyboard = webAppUrl && webAppUrl.startsWith('https://')
       ? { reply_markup: { inline_keyboard: [[{ text: '🚀 Открыть MorphAI Studio', web_app: { url: webAppUrl } }]] } }
@@ -79,47 +75,9 @@ function setupStartHandler(bot) {
 
     await bot.sendMessage(
       msg.chat.id,
-      `✨ *MorphAI WebApp*\n\nВы авторизованы как ID: \`${msg.from.id}\`\nНажмите кнопку ниже для запуска веб-студии:`,
+      `✨ *MorphAI Studio*\n\nНажмите кнопку ниже для запуска веб-студии:`,
       { parse_mode: 'Markdown', ...keyboard }
     );
-  });
-
-  // Команда /help
-  bot.onText(/\/help/, async (msg) => {
-    const helpText =
-      '📖 *Команды MorphAI:*\n\n' +
-      '/start — Главное меню\n' +
-      '/balance — Проверить баланс\n' +
-      '/generate — Начать генерацию\n' +
-      '/faceswap — Face Swap видео\n' +
-      '/help — Эта справка\n\n' +
-      '💡 Или просто выберите категорию в меню!';
-
-    await bot.sendMessage(msg.chat.id, helpText, { parse_mode: 'Markdown' });
-  });
-
-  // Команда /balance
-  bot.onText(/\/balance/, async (msg) => {
-    try {
-      const result = await db.query(
-        'SELECT balance FROM users WHERE telegram_id = $1',
-        [msg.from.id]
-      );
-
-      if (result.rows.length === 0) {
-        return bot.sendMessage(msg.chat.id, 'Вы ещё не зарегистрированы. Нажмите /start');
-      }
-
-      const balance = result.rows[0].balance;
-      await bot.sendMessage(
-        msg.chat.id,
-        `💰 Ваш баланс: *${balance} CR*`,
-        { parse_mode: 'Markdown' }
-      );
-    } catch (error) {
-      console.error('[Bot/Balance]', error.message);
-      await bot.sendMessage(msg.chat.id, '❌ Ошибка получения баланса.');
-    }
   });
 
   // Callback: вернуться в главное меню

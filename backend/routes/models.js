@@ -19,15 +19,29 @@ router.get('/', async (req, res, next) => {
 
     query += ' ORDER BY sort_order ASC, id ASC';
 
+    const cleanModelName = (name) => {
+      if (!name || typeof name !== 'string') return name;
+      return name.replace(/\s+api\b/gi, '').replace(/\bapi\s+/gi, '').replace(/\bapi\b/gi, '').trim();
+    };
+
     const result = await db.query(query, values);
     if (result.rows.length > 0) {
-      const models = result.rows.map(row => ({
-        ...row,
-        preview: row.preview_url,
-        preview_url: row.preview_url,
-        desc: row.description || row.desc,
-        description: row.description || row.desc,
-      }));
+      const models = result.rows.map(row => {
+        const rawVersions = Array.isArray(row.versions) ? row.versions : [];
+        const sanitizedVersions = rawVersions.map(v => ({
+          ...v,
+          name: cleanModelName(v.name)
+        }));
+        return {
+          ...row,
+          name: cleanModelName(row.name),
+          preview: row.preview_url,
+          preview_url: row.preview_url,
+          desc: row.description || row.desc,
+          description: row.description || row.desc,
+          versions: sanitizedVersions,
+        };
+      });
       return res.json({ models });
     }
 
@@ -38,7 +52,16 @@ router.get('/', async (req, res, next) => {
     models = models.filter((m) => m.category !== 'faceswap');
     res.json({ models });
   } catch (error) {
-    next(error);
+    console.warn('[Models Route] DB query failed, falling back to static config:', error.message);
+    try {
+      const { getAllModels } = require('../config/models');
+      let models = getAllModels();
+      if (req.query.category) models = models.filter((m) => m.category === req.query.category);
+      models = models.filter((m) => m.category !== 'faceswap');
+      return res.json({ models });
+    } catch (fallbackErr) {
+      next(error);
+    }
   }
 });
 

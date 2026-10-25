@@ -186,12 +186,27 @@ router.post('/tribute', async (req, res) => {
     // Определяем количество начисляемых единиц CR
     let creditsToAdd = Number(data.credits || data.credits_added || 0);
     if (!creditsToAdd || creditsToAdd <= 0) {
+      // 1. Попытка сопоставить с актуальными тарифами из базы данных (установленными админом)
+      try {
+        const pkgRes = await db.query(
+          'SELECT credits FROM credit_packages WHERE price_rub = $1 AND is_active = TRUE ORDER BY id ASC LIMIT 1',
+          [Math.round(rawAmount)]
+        );
+        if (pkgRes.rows.length > 0) {
+          creditsToAdd = pkgRes.rows[0].credits;
+        }
+      } catch (dbErr) {
+        console.warn('[Tribute Webhook] Dynamic package lookup warn:', dbErr.message);
+      }
+    }
+
+    if (!creditsToAdd || creditsToAdd <= 0) {
+      // 2. Фоллбэк по стандартным диапазонам цен
       if (rawAmount >= 9000 || rawAmount === 9990) creditsToAdd = 1250;
       else if (rawAmount >= 3500 || rawAmount === 3990) creditsToAdd = 350;
       else if (rawAmount >= 1200 || rawAmount === 1490) creditsToAdd = 100;
       else if (rawAmount >= 400 || rawAmount === 500) creditsToAdd = 50;
       else {
-        // Дефолтный курс пополнения
         creditsToAdd = Math.max(10, Math.round(rawAmount / 3));
       }
     }
@@ -262,6 +277,89 @@ router.post('/tribute', async (req, res) => {
   } catch (error) {
     console.error('[Tribute Webhook] Ошибка обработки:', error);
     res.status(200).json({ ok: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/webhooks/tribute/test
+ * Sandbox эндпоинт для мгновенного бесплатного тестирования пополнения баланса
+ */
+router.post('/tribute/test', async (req, res) => {
+  try {
+    const { telegram_id, credits = 100, package_name = 'Тестовый пакет (Sandbox)' } = req.body || {};
+    const tgId = telegram_id ? parseInt(telegram_id, 10) : null;
+    const creditsToAdd = Math.max(1, parseInt(credits, 10) || 100);
+
+    let targetUser = null;
+    if (tgId) {
+      const userRes = await db.query('SELECT * FROM users WHERE telegram_id = $1 LIMIT 1', [tgId]);
+      if (userRes.rows.length > 0) {
+        targetUser = userRes.rows[0];
+      }
+    }
+
+    if (!targetUser) {
+      // Фоллбэк: берем первого пользователя из базы
+      const anyUser = await db.query('SELECT * FROM users ORDER BY id ASC LIMIT 1');
+      if (anyUser.rows.length > 0) {
+        targetUser = anyUser.rows[0];
+      }
+    }
+
+    if (!targetUser) {
+      return res.status(404).json({ ok: false, error: 'Пользователь не найден в базе данных' });
+    }
+
+    const updateRes = await db.query(
+      `UPDATE users 
+       SET balance = balance + $1, 
+           updated_at = NOW() 
+       WHERE id = $2 
+       RETURNING balance`,
+      [creditsToAdd, targetUser.id]
+    );
+    const newBalance = updateRes.rows[0]?.balance;
+
+    try {
+      await db.query(
+        `INSERT INTO payments (user_id, amount_rub, credits_added, status, payment_method)
+         VALUES ($1, 0, $2, 'completed', 'Tribute Sandbox')`,
+        [targetUser.id, creditsToAdd]
+      );
+    } catch (payErr) {
+      console.warn('[Tribute Sandbox] Payment log warn:', payErr.message);
+    }
+
+    if (telegramService && telegramService.bot && targetUser.telegram_id) {
+      try {
+        await telegramService.bot.sendMessage(
+          targetUser.telegram_id,
+          `🧪 *Тестовое пополнение (Sandbox) успешно!*\n\n` +
+          `Пакет: *${package_name}*\n` +
+          `Начислено: *+${creditsToAdd} CR*\n` +
+          `Текущий баланс: *${newBalance} CR*\n\n` +
+          `Вы можете свободно тратить эти кредиты на генерацию видео и фото в Morph AI.`,
+          { parse_mode: 'Markdown' }
+        );
+      } catch (botErr) {
+        console.warn('[Tribute Sandbox] Bot message warn:', botErr.message);
+      }
+    }
+
+    console.log(`[Tribute Sandbox] ✅ Тестовое начисление +${creditsToAdd} CR пользователю ID ${targetUser.id} (Новый баланс: ${newBalance} CR)`);
+
+    res.json({
+      ok: true,
+      success: true,
+      sandbox: true,
+      package_name,
+      credits_added: creditsToAdd,
+      new_balance: newBalance,
+      user_id: targetUser.id
+    });
+  } catch (error) {
+    console.error('[Tribute Sandbox] Error:', error);
+    res.status(500).json({ ok: false, error: error.message });
   }
 });
 

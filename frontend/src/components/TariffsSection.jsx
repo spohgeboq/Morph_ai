@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import { Check, Sparkles, ShieldCheck, CreditCard, AlertCircle, Info, Zap } from 'lucide-react';
+import { Check, Sparkles, ShieldCheck, CreditCard, Gift, Zap } from 'lucide-react';
 import { VisaLogo, MastercardLogo, PciDssBadge, ThreeDSecureBadge } from './PaymentBadges';
+import RechargeModal from './RechargeModal';
 
 export const TARIFF_PACKAGES = [
   {
     id: 'starter',
     name: 'Стартовый',
     credits: 100,
+    bonusCredits: 0,
+    totalCredits: 100,
     priceKzt: 1490,
     priceRub: 320,
     badge: 'Для пробы',
@@ -25,13 +28,15 @@ export const TARIFF_PACKAGES = [
     id: 'optimal',
     name: 'Оптимальный',
     credits: 350,
+    bonusCredits: 50,
+    totalCredits: 400,
     priceKzt: 3990,
     priceRub: 850,
-    badge: 'Хит продаж',
+    badge: 'ХИТ • +50 В ПОДАРОК',
     popular: true,
     description: 'Самый сбалансированный пакет для создания полноценных фотосессий и яркого медиаконтента.',
     features: [
-      '350 генераций (CR) на баланс',
+      '350 CR + 50 CR в подарок (всего 400 CR)',
       'До 90 фотореалистичных 4K портретов',
       'До 35 видеороликов высокого разрешения',
       'Полный доступ к Студийному фотосету (5 фото)',
@@ -44,13 +49,15 @@ export const TARIFF_PACKAGES = [
     id: 'creator_pro',
     name: 'Создатель PRO',
     credits: 1250,
+    bonusCredits: 250,
+    totalCredits: 1500,
     priceKzt: 9990,
     priceRub: 2150,
-    badge: 'VIP Студия',
+    badge: 'VIP • +250 В ПОДАРОК',
     popular: false,
     description: 'Профессиональный тариф для блогеров, креаторов, маркетологов и создания коммерческого контента.',
     features: [
-      '1250 генераций (CR) на баланс',
+      '1250 CR + 250 CR в подарок (всего 1500 CR)',
       'До 300 портретов в максимальном разрешении',
       'До 125 видео с расширенным хронометражем',
       'Все премиум-модели без ограничений',
@@ -63,9 +70,11 @@ export const TARIFF_PACKAGES = [
     id: 'studio_max',
     name: 'Studio Unlimited',
     credits: 2500,
+    bonusCredits: 0,
+    totalCredits: 2500,
     priceKzt: 18990,
     priceRub: 4090,
-    badge: 'Максимум',
+    badge: 'МАКСИМУМ',
     popular: false,
     description: 'Максимальный объем ресурсов для агентств и студий, работающих с масштабным производством медиа.',
     features: [
@@ -80,11 +89,13 @@ export const TARIFF_PACKAGES = [
 ];
 
 export const TariffsSection = ({ onSelectPackage, title = 'Тарифные планы и пакеты генераций', subtitle = 'Выберите подходящий пакет для мгновенного пополнения баланса. Единицы генерации не сгорают.' }) => {
-  const [activeModal, setActiveModal] = useState(null);
+  const [showRechargeModal, setShowRechargeModal] = useState(false);
 
   const handleBuyClick = (pkg) => {
-    setActiveModal(pkg);
-    if (onSelectPackage) onSelectPackage(pkg);
+    if (onSelectPackage) {
+      onSelectPackage(pkg);
+    }
+    setShowRechargeModal(true);
   };
 
   return (
@@ -103,7 +114,7 @@ export const TariffsSection = ({ onSelectPackage, title = 'Тарифные пл
           <div key={pkg.id} className={`tariff-card-item ${pkg.popular ? 'popular' : ''}`}>
             {pkg.badge && (
               <div className={`tariff-card-badge ${pkg.popular ? 'popular-badge' : ''}`}>
-                {pkg.popular && <Zap size={13} fill="currentColor" />}
+                {pkg.bonusCredits > 0 ? <Gift size={13} fill="currentColor" /> : (pkg.popular && <Zap size={13} fill="currentColor" />)}
                 <span>{pkg.badge}</span>
               </div>
             )}
@@ -115,8 +126,8 @@ export const TariffsSection = ({ onSelectPackage, title = 'Тарифные пл
 
             <div className="tariff-card-pricing">
               <div className="tariff-credits-count">
-                <span className="credits-number">{pkg.credits}</span>
-                <span className="credits-label">CR (генераций)</span>
+                <span className="credits-number">{pkg.totalCredits}</span>
+                <span className="credits-label">CR {pkg.bonusCredits > 0 ? `(${pkg.credits} + ${pkg.bonusCredits} бонус)` : 'генераций'}</span>
               </div>
               <div className="tariff-price-amount">
                 <span className="price-currency">{pkg.priceKzt.toLocaleString('ru-RU')} ₸</span>
@@ -156,7 +167,7 @@ export const TariffsSection = ({ onSelectPackage, title = 'Тарифные пл
         <div className="tariffs-security-inner">
           <div className="tariffs-sec-badge-item">
             <ShieldCheck size={20} color="#10b981" />
-            <span>Интернет-эквайринг АО «Народный Банк Казахстана» (Halyk Bank)</span>
+            <span>Интернет-эквайринг Tribute (Kaspi, Halyk, Jusan, Visa, Mastercard)</span>
           </div>
           <div className="tariffs-sec-logos">
             <div className="sec-logo-pill"><VisaLogo height={22} /></div>
@@ -167,53 +178,11 @@ export const TariffsSection = ({ onSelectPackage, title = 'Тарифные пл
         </div>
       </div>
 
-      {/* Модальное окно: Оплата временно подключается */}
-      {activeModal && (
-        <div className="tariffs-modal-overlay" onClick={() => setActiveModal(null)}>
-          <div className="tariffs-modal-box" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-status-icon">
-              <Info size={32} color="#3b82f6" />
-            </div>
-
-            <h3 className="modal-title">Оплата временно подключается</h3>
-            
-            <div className="modal-badge-row">
-              <span className="modal-package-tag">Выбран тариф: {activeModal.name} ({activeModal.credits} CR)</span>
-              <span className="modal-price-tag">{activeModal.priceKzt.toLocaleString('ru-RU')} ₸</span>
-            </div>
-
-            <p className="modal-description">
-              Интеграция с защищенным платежным шлюзом интернет-эквайринга <strong>АО «Народный Банк Казахстана» (Halyk Bank / Epay)</strong> находится в процессе финального подключения и банковской модерации.
-            </p>
-
-            <div className="modal-alert-box">
-              <AlertCircle size={18} color="#e5b95c" className="alert-box-icon" />
-              <span>
-                Прием онлайн-оплаты банковскими картами <strong>Visa</strong> и <strong>Mastercard</strong> станет доступен сразу после завершения проверки банком.
-              </span>
-            </div>
-
-            <div className="modal-logos-row">
-              <div className="modal-logo-pill"><VisaLogo height={24} /></div>
-              <div className="modal-logo-pill"><MastercardLogo height={26} /></div>
-              <ThreeDSecureBadge height={26} />
-              <PciDssBadge height={26} />
-            </div>
-
-            <p className="modal-contacts-note">
-              По вопросам предзаказа пакетов или тестирования функционала обращайтесь в службу поддержки: <a href="mailto:support@morph-ai.asia">support@morph-ai.asia</a> или Telegram <a href="https://t.me/morphai_support" target="_blank" rel="noreferrer">@morphai_support</a>.
-            </p>
-
-            <button
-              className="modal-close-btn"
-              onClick={() => setActiveModal(null)}
-              type="button"
-            >
-              Понятно
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Рабочая форма онлайн-оплаты через подключенный эквайринг */}
+      <RechargeModal
+        isOpen={showRechargeModal}
+        onClose={() => setShowRechargeModal(false)}
+      />
     </div>
   );
 };

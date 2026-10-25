@@ -128,12 +128,23 @@ app.get('/api/health', (req, res) => {
 });
 
 // Публичные тарифы кредитов для клиентов
-app.get('/api/tariffs', async (req, res, next) => {
+app.get('/api/tariffs', async (req, res) => {
+  const fallbackTariffs = [
+    { id: 1, name: '100 CR', credits: 100, price_rub: 1490, badge: null, desc: 'Для историй и фото', sort_order: 1 },
+    { id: 2, name: '350 CR', credits: 350, price_rub: 3990, badge: 'ХИТ • +50 В ПОДАРОК', desc: '350 CR + 50 в подарок (всего 400 CR)', sort_order: 2 },
+    { id: 3, name: '1250 CR', credits: 1250, price_rub: 9990, badge: 'VIP • +250 В ПОДАРОК', desc: '1250 CR + 250 в подарок (всего 1500 CR)', sort_order: 3 },
+    { id: 4, name: '2500 CR', credits: 2500, price_rub: 18990, badge: 'МАКСИМУМ', desc: 'Studio Unlimited', sort_order: 4 },
+  ];
+
   try {
     const result = await db.query('SELECT * FROM credit_packages WHERE is_active = TRUE ORDER BY sort_order ASC, id ASC');
-    res.json({ tariffs: result.rows });
+    if (result.rows && result.rows.length > 0) {
+      return res.json({ tariffs: result.rows });
+    }
+    res.json({ tariffs: fallbackTariffs });
   } catch (err) {
-    next(err);
+    console.warn('[Tariffs Route] DB query warn, using fallback tariffs:', err.message);
+    res.json({ tariffs: fallbackTariffs });
   }
 });
 
@@ -152,12 +163,19 @@ app.get('/api/settings/photoshoot', async (req, res, next) => {
   try {
     const result = await db.query("SELECT value FROM system_settings WHERE key = 'photoshoot_config'");
     if (result.rows.length > 0) {
-      return res.json({ config: result.rows[0].value });
+      let cfg = result.rows[0].value || {};
+      if (typeof cfg === 'string') {
+        try { cfg = JSON.parse(cfg); } catch (e) {}
+      }
+      if (cfg.badge && /^(тест|test)$/i.test(String(cfg.badge).trim())) {
+        cfg.badge = '5 ФОТО В 1 СЕТЕ';
+      }
+      return res.json({ config: cfg });
     }
     res.json({
       config: {
         cost: 10,
-        badge: "Editorial 4K",
+        badge: "5 ФОТО В 1 СЕТЕ",
         count_badge: "+5",
         title: "Профессиональный студийный сет",
         desc: "5 журнальных кадров премиум-класса с идеальным светом и живыми эмоциями",

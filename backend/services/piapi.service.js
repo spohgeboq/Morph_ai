@@ -178,26 +178,50 @@ class PiAPIService {
 
     if (slug.startsWith('kling') || slug.includes('kling')) {
       model = 'kling';
-      task_type = 'video_generation';
+      if (slug.includes('omni')) {
+        task_type = 'omni_video_generation';
+      } else if (slug.includes('avatar')) {
+        task_type = 'avatar';
+      } else {
+        task_type = 'video_generation';
+      }
       const versionMatch = slug.match(/v([0-9.]+)/);
-      input.version = versionMatch ? versionMatch[1] : '1.5';
+      input.version = versionMatch ? versionMatch[1] : (slug.includes('3') ? '3.0' : slug.includes('2.6') ? '2.6' : slug.includes('2.5') ? '2.5' : '1.5');
       input.duration = duration || 6;
       input.mode = slug.includes('pro') || slug.includes('ultra') ? 'pro' : 'std';
       input.aspect_ratio = aspect_ratio || '16:9';
     } else if (slug.includes('hailuo') || slug.includes('minimax')) {
       model = 'hailuo';
-      task_type = 'video_generation';
+      task_type = slug.includes('h3') ? 'minimax-h3' : 'video_generation';
       input.duration = duration || 6;
       input.aspect_ratio = aspect_ratio || '16:9';
     } else if (slug.includes('seedance')) {
       model = 'seedance';
-      task_type = 'seedance-2.5';
-      input.mode = 'text_to_video';
+      task_type = slug.includes('2.5') ? 'seedance-2.5' : (slug.includes('2.0') || slug.includes('2-0') ? 'seedance-2.0' : 'seedance-2.5');
+      input.mode = reference_images.length > 0 ? 'image_to_video' : 'text_to_video';
       input.duration = duration || 6;
       input.aspect_ratio = aspect_ratio || '16:9';
-    } else if (slug.startsWith('nano-banana') || slug.includes('nano-banana')) {
+    } else if (slug.includes('veo')) {
+      model = 'veo3';
+      task_type = slug.includes('fast') ? 'veo3-video-fast' : 'veo3-video';
+      input.aspect_ratio = aspect_ratio || '16:9';
+      input.duration = duration || 5;
+    } else if (slug.includes('wan')) {
+      model = 'Qubico/wanx';
+      if (reference_images.length > 0) {
+        task_type = slug.includes('1.3b') ? 'img2video-1.3b' : 'wan22-img2video-14b';
+      } else {
+        task_type = slug.includes('1.3b') ? 'txt2video-1.3b' : 'wan22-txt2video-14b';
+      }
+      input.aspect_ratio = aspect_ratio || '16:9';
+      input.duration = duration || 6;
+    } else if (slug.includes('omnihuman') || slug.includes('omni-human')) {
+      model = 'omni-human';
+      task_type = slug.includes('1.5') ? 'omni-human-1.5' : 'omni-human';
+      input.aspect_ratio = aspect_ratio || '9:16';
+    } else if (slug.startsWith('nano-banana') || slug.includes('nano-banana') || slug.includes('banana')) {
       model = 'gemini';
-      task_type = slug; // nano-banana-2, nano-banana-1-pro, nano-banana-1
+      task_type = slug.includes('pro') ? 'nano-banana-pro' : slug.includes('2') ? 'nano-banana-2' : 'gemini-2.5-flash-image';
       input = {
         prompt,
         aspect_ratio: aspect_ratio || '1:1',
@@ -206,14 +230,22 @@ class PiAPIService {
       };
     } else if (slug.startsWith('seedream') || slug.includes('seedream') || slug.startsWith('sd-')) {
       model = 'seedream';
-      task_type = slug; // seedream-5-pro, seedream-5-lite, seedream-4-0
+      task_type = slug.includes('5-lite') ? 'seedream-5-lite' : slug.includes('4') ? 'seedream-4.0' : 'seedream-5-pro';
       input = {
         prompt,
         aspect_ratio: aspect_ratio || '1:1',
       };
+    } else if (slug.includes('qwen')) {
+      model = slug.includes('2.1') ? 'Qubico/qwen-image-2.1' : 'Qubico/qwen-image';
+      task_type = 'txt2img';
+      input.aspect_ratio = aspect_ratio || '1:1';
+    } else if (slug.includes('z-image') || slug.includes('zimage')) {
+      model = 'Qubico/z-image';
+      task_type = 'txt2img';
+      input.aspect_ratio = aspect_ratio || '1:1';
     } else if (slug.includes('flux')) {
       model = slug.includes('schnell') || slug.includes('lite') ? 'Qubico/flux1-schnell' : 'Qubico/flux1-dev';
-      task_type = 'txt2img';
+      task_type = slug.includes('kontext') ? 'kontext' : 'txt2img';
       input.aspect_ratio = aspect_ratio || '1:1';
     } else if (slug.includes('face-swap') || slug.includes('faceswap')) {
       model = 'Qubico/image-toolkit';
@@ -294,9 +326,9 @@ class PiAPIService {
    */
   _isVideoModel(slug) {
     const videoSlugs = [
-      'kling-video', 'minimax-hailuo', 'luma-', 'seedance',
+      'kling', 'minimax', 'hailuo', 'seedance', 'veo', 'wan', 'omnihuman', 'omni-human', 'runway'
     ];
-    return videoSlugs.some((prefix) => slug.includes(prefix));
+    return videoSlugs.some((prefix) => slug.toLowerCase().includes(prefix));
   }
 
   /**

@@ -82,32 +82,24 @@ export function getTelegramUser() {
     }
   } catch (e) {}
 
-  // 3. Проверяем сохраненного пользователя в localStorage
+  // 3. Проверяем сохраненного пользователя в localStorage (только реальный профиль)
   let savedUser = null;
   try {
     const raw = localStorage.getItem('morphai_local_user');
-    if (raw) savedUser = JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      // Очищаем старые тестовые мок-данные 123456789
+      if (parsed && (parsed.id === 123456789 || parsed.telegram_id === 123456789 || parsed.username === 'MorphUser' || parsed.is_mock)) {
+        localStorage.removeItem('morphai_local_user');
+        localStorage.removeItem('morphai_cached_user');
+      } else if (parsed && parsed.id) {
+        return parsed;
+      }
+    }
   } catch (e) {}
 
-  if (savedUser && savedUser.id) {
-    return savedUser;
-  }
-
-  // 4. Локальный гостевой пользователь по умолчанию
-  savedUser = {
-    id: 123456789,
-    telegram_id: 123456789,
-    username: 'MorphUser',
-    first_name: 'Morph Explorer',
-    photo_url: null,
-    is_telegram: false,
-    is_mock: true,
-  };
-  try {
-    localStorage.setItem('morphai_local_user', JSON.stringify(savedUser));
-  } catch (e) {}
-
-  return savedUser;
+  // 4. Для неавторизованных пользователей возвращаем null (гость)
+  return null;
 }
 
 /**
@@ -116,6 +108,9 @@ export function getTelegramUser() {
  */
 export async function syncUser() {
   const tgUser = getTelegramUser();
+  if (!tgUser || !tgUser.id || tgUser.is_mock || tgUser.id === 123456789) {
+    return null;
+  }
   const initData = window.Telegram?.WebApp?.initData || WebApp?.initData || '';
 
   const headers = { 'Content-Type': 'application/json' };
@@ -657,7 +652,14 @@ export async function fetchPhotoshootConfig() {
     const res = await fetch(`${API_BASE}/settings/photoshoot`);
     if (!res.ok) return null;
     const data = await res.json();
-    return data.config || null;
+    if (data.config) {
+      const cfg = { ...data.config };
+      if (!cfg.badge || /^(тест|test)$/i.test(String(cfg.badge).trim())) {
+        cfg.badge = '5 ФОТО В 1 СЕТЕ';
+      }
+      return cfg;
+    }
+    return null;
   } catch (err) {
     console.warn('[API] fetchPhotoshootConfig fallback:', err.message);
     return null;
@@ -811,3 +813,31 @@ export async function checkRemixStatus(taskId) {
   if (!res.ok) throw new Error(data.message || 'Ошибка проверки статуса Remix');
   return data;
 }
+
+// ==========================================
+// ПУБЛИЧНЫЕ ТАРИФЫ И ОПЛАТА TRIBUTE
+// ==========================================
+
+export async function fetchPublicTariffs() {
+  try {
+    const res = await fetch(`${API_BASE}/tariffs`);
+    if (!res.ok) throw new Error('Ошибка загрузки тарифов');
+    const data = await res.json();
+    return data.tariffs || [];
+  } catch (err) {
+    console.warn('[API] fetchPublicTariffs fallback:', err.message);
+    return [];
+  }
+}
+
+export async function triggerTributeTestPayment({ telegram_id, credits = 100, package_name }) {
+  const res = await fetch(`${API_BASE}/webhooks/tribute/test`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ telegram_id, credits, package_name }),
+  });
+  const data = await res.json();
+  if (!res.ok || !data.ok) throw new Error(data.error || 'Ошибка тестовой оплаты');
+  return data;
+}
+

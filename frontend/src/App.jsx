@@ -12,13 +12,18 @@ import Chats from './pages/Chats';
 import Profile from './pages/Profile';
 import AdminHub from './pages/Admin/AdminHub';
 import Legal from './pages/Legal';
-import Footer from './components/Footer';
+import NotFound from './pages/NotFound';
+import DesktopSidebar from './components/DesktopSidebar';
+import RechargeModal from './components/RechargeModal';
+import ErrorBoundary from './components/ErrorBoundary';
 
-import { UserProvider } from './components/UserContext';
+import { UserProvider, useUser } from './components/UserContext';
 
 function AppContent() {
   const location = useLocation();
   const isAdmin = location.pathname.startsWith('/admin');
+  const [showGlobalRecharge, setShowGlobalRecharge] = React.useState(false);
+  const { balance } = useUser();
 
   useEffect(() => {
     if (isAdmin) {
@@ -31,31 +36,41 @@ function AppContent() {
     };
   }, [isAdmin]);
 
-  const isFeed = location.pathname === '/feed';
-  const showFooter = !isAdmin && !isFeed;
-
   return (
-    <>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/feed" element={<Feed />} />
-        <Route path="/create" element={<Create />} />
-        <Route path="/chats" element={<Chats />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/admin" element={<AdminHub />} />
-        <Route path="/legal" element={<Legal />} />
-        <Route path="/privacy" element={<Legal />} />
-        <Route path="/terms" element={<Legal />} />
-        <Route path="/refund" element={<Legal />} />
-        <Route path="/security" element={<Legal />} />
-        <Route path="/delivery" element={<Legal />} />
-        <Route path="/tariffs" element={<Legal />} />
-        <Route path="/pricing" element={<Legal />} />
-        <Route path="/contacts" element={<Legal />} />
-      </Routes>
-      {showFooter && <Footer />}
+    <div className={`app-shell ${isAdmin ? 'admin-layout' : ''}`}>
+      {!isAdmin && (
+        <DesktopSidebar onOpenRecharge={() => setShowGlobalRecharge(true)} />
+      )}
+
+      <main className="app-main-viewport">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/feed" element={<Feed />} />
+          <Route path="/create" element={<Create />} />
+          <Route path="/chats" element={<Chats />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/admin" element={<AdminHub />} />
+          <Route path="/legal" element={<Legal />} />
+          <Route path="/privacy" element={<Legal />} />
+          <Route path="/terms" element={<Legal />} />
+          <Route path="/refund" element={<Legal />} />
+          <Route path="/security" element={<Legal />} />
+          <Route path="/delivery" element={<Legal />} />
+          <Route path="/tariffs" element={<Legal />} />
+          <Route path="/pricing" element={<Legal />} />
+          <Route path="/contacts" element={<Legal />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </main>
+
       {!isAdmin && <BottomNav />}
-    </>
+
+      <RechargeModal 
+        isOpen={showGlobalRecharge} 
+        onClose={() => setShowGlobalRecharge(false)} 
+        balance={balance} 
+      />
+    </div>
   );
 }
 
@@ -78,7 +93,9 @@ function App() {
         <UserProvider>
           <ToastProvider>
             <BrowserRouter>
-              <AppContent />
+              <ErrorBoundary>
+                <AppContent />
+              </ErrorBoundary>
             </BrowserRouter>
           </ToastProvider>
         </UserProvider>

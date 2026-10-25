@@ -35,6 +35,15 @@ import {
 import { useUser } from '../components/UserContext';
 import { PaymentTrustRow } from '../components/PaymentBadges';
 import RechargeModal from '../components/RechargeModal';
+import Footer from '../components/Footer';
+
+// Функция санитизации бейджа студийного фотосета (убираем заглушку "Тест")
+const cleanPhotoshootBadge = (badge) => {
+  if (!badge || /^(тест|test)$/i.test(String(badge).trim())) {
+    return '5 ФОТО В 1 СЕТЕ';
+  }
+  return badge;
+};
 import { 
   fetchPublicStories, 
   fetchPublicTemplates, 
@@ -78,11 +87,14 @@ const Home = () => {
       const cached = localStorage.getItem('morphai_photoshoot_config');
       if (cached) {
         const parsed = JSON.parse(cached);
-        if (parsed && parsed.photos?.length > 0) return parsed;
+        if (parsed && parsed.photos?.length > 0) {
+          if (parsed.badge) parsed.badge = cleanPhotoshootBadge(parsed.badge);
+          return parsed;
+        }
       }
     } catch (e) {}
     return {
-      badge: 'Editorial 4K',
+      badge: '5 ФОТО В 1 СЕТЕ',
       cost: 10,
       count_badge: '+5',
       title: 'Студийный фотосет',
@@ -105,9 +117,10 @@ const Home = () => {
 
     fetchPhotoshootConfig().then(cfg => {
       if (cfg && cfg.photos && cfg.photos.length > 0) {
-        setPhotoshootConfig(cfg);
+        const cleaned = { ...cfg, badge: cleanPhotoshootBadge(cfg.badge) };
+        setPhotoshootConfig(cleaned);
         try {
-          localStorage.setItem('morphai_photoshoot_config', JSON.stringify(cfg));
+          localStorage.setItem('morphai_photoshoot_config', JSON.stringify(cleaned));
         } catch (e) {}
       }
     }).catch(err => console.error('Error fetching photoshoot config:', err));
@@ -142,7 +155,10 @@ const Home = () => {
     });
 
     const handlePsUpdate = (e) => {
-      if (e.detail) setPhotoshootConfig(e.detail);
+      if (e.detail) {
+        const cleaned = { ...e.detail, badge: cleanPhotoshootBadge(e.detail.badge) };
+        setPhotoshootConfig(cleaned);
+      }
     };
     window.addEventListener('morphai_photoshoot_updated', handlePsUpdate);
 
@@ -426,6 +442,53 @@ const Home = () => {
         </section>
       )}
 
+      {/* 2.5 БЫСТРЫЕ РАЗДЕЛЫ ГЕНЕРАЦИИ (ФОТО, ВИДЕО, АУДИО) */}
+      <section className="quick-create-section">
+        <div className="quick-create-grid">
+          {/* Создать фото */}
+          <div 
+            className="quick-create-card"
+            onClick={() => navigate('/create', { state: { category: 'photo' } })}
+          >
+            <div className="quick-create-icon-squircle">
+              <ImageIcon size={20} strokeWidth={2.2} />
+            </div>
+            <div className="quick-create-text-col">
+              <span className="quick-create-title">Создать фото</span>
+              <span className="quick-create-desc">NanoBanana, Seedream...</span>
+            </div>
+          </div>
+
+          {/* Создать видео */}
+          <div 
+            className="quick-create-card"
+            onClick={() => navigate('/create', { state: { category: 'video' } })}
+          >
+            <div className="quick-create-icon-squircle">
+              <VideoIcon size={20} strokeWidth={2.2} />
+            </div>
+            <div className="quick-create-text-col">
+              <span className="quick-create-title">Создать видео</span>
+              <span className="quick-create-desc">VEO, Kling, Seedance...</span>
+            </div>
+          </div>
+
+          {/* ИИ-Сказки и текст */}
+          <div 
+            className="quick-create-card"
+            onClick={() => navigate('/create', { state: { category: 'text' } })}
+          >
+            <div className="quick-create-icon-squircle">
+              <BookOpen size={20} strokeWidth={2.2} />
+            </div>
+            <div className="quick-create-text-col">
+              <span className="quick-create-title">ИИ-Сказки</span>
+              <span className="quick-create-desc">GPT-4o, Claude, Sci-Fi...</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* 3. ПРОФЕССИОНАЛЬНЫЙ СТУДИЙНЫЙ ФОТОСЕТ (EDITORIAL HERO CARD) */}
       <section className="photoshoot-hero-section">
         <div className="photoshoot-editorial-card">
@@ -433,7 +496,7 @@ const Home = () => {
           <div className="editorial-card-main">
             <div className="editorial-left-col">
               <div className="editorial-badge-row">
-                <span className="editorial-gold-pill">{photoshootConfig.badge || t('studioBadge')}</span>
+                <span className="editorial-gold-pill">{cleanPhotoshootBadge(photoshootConfig.badge) || t('studioBadge')}</span>
                 <span className="editorial-cost-tag">{photoshootConfig.cost || 10} CR</span>
               </div>
               <h3>{photoshootConfig.title || t('studioTitle')}</h3>
@@ -663,7 +726,7 @@ const Home = () => {
             <div className="sheet-header">
               <div className="sheet-title-info">
                 <h3>Выберите ИИ-модель</h3>
-                <span className="sheet-subtitle">Переключение движков Replicate и Fal.ai</span>
+                <span className="sheet-subtitle">Передовые нейросети студийного уровня</span>
               </div>
               <button className="sheet-close-btn" onClick={() => setShowModelModal(false)}>
                 <X size={20} />
@@ -1089,6 +1152,9 @@ const Home = () => {
           </div>
         </div>
       )}
+
+      {/* Подвал сайта с контактами, офертой и эквайрингом */}
+      <Footer />
 
       {/* =========================================================
           МОДАЛКА ПОПОЛНЕНИЯ БАЛАНСА

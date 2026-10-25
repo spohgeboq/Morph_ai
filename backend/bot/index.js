@@ -109,19 +109,16 @@ function initBot({ registry }) {
     }
   });
 
-  // Настройка меню-кнопки (Menu Button) и команд бота
+  // Настройка Telegram Mini App: удаляем все команды бота и настраиваем кнопку меню на WebApp
   try {
     const webAppUrl = process.env.TELEGRAM_WEBAPP_URL || process.env.CLIENT_URL || 'https://morph-ai.asia';
 
-    // Устанавливаем команды бота
-    bot.setMyCommands([
-      { command: 'start', description: '🚀 Главное меню и баланс' },
-      { command: 'app', description: '✨ Запустить MorphAI WebApp' },
-      { command: 'balance', description: '💰 Проверить баланс кредитов' },
-      { command: 'help', description: '📖 Справка и возможности' },
-    ]).catch((err) => console.warn('[Bot] setMyCommands error:', err.message));
+    // Удаляем все текстовые команды бота (/start, /app, /balance, /help), чтобы не было лишнего меню команд
+    bot.deleteMyCommands().then(() => {
+      console.log('[Bot] ✓ Все команды бота удалены (чистый Mini App режим)');
+    }).catch((err) => console.warn('[Bot] deleteMyCommands error:', err.message));
 
-    // Если указан HTTPS URL для WebApp, настраиваем кнопку меню
+    // Настраиваем кнопку меню на запуск WebApp
     if (webAppUrl && webAppUrl.startsWith('https://')) {
       bot.setChatMenuButton({
         menu_button: {
@@ -130,7 +127,7 @@ function initBot({ registry }) {
           web_app: { url: webAppUrl },
         },
       }).then(() => {
-        console.log(`[Bot] ✓ Menu Button настроен на WebApp: ${webAppUrl}`);
+        console.log(`[Bot] ✓ Menu Button настроен на запуск WebApp: ${webAppUrl}`);
       }).catch((err) => {
         console.warn('[Bot] setChatMenuButton error:', err.message);
       });

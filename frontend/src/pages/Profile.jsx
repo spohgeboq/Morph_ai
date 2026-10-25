@@ -33,10 +33,11 @@ import WebApp from '@twa-dev/sdk';
 import { useToast } from '../components/ToastContext';
 import { useLanguage } from '../components/LanguageContext';
 import { useCurrency } from '../components/CurrencyContext';
-import { useUser } from '../components/UserContext';
 import RechargeModal from '../components/RechargeModal';
+import Footer from '../components/Footer';
 import { fetchUserGenerations } from '../services/api';
 import { formatModelDisplayName } from '../utils/modelNames';
+import { useUser } from '../components/UserContext';
 
 // Начальные данные (пустые, заполняются реальными генерациями пользователя)
 const INITIAL_MY_CREATIONS = [];
@@ -120,8 +121,9 @@ const Profile = () => {
   const [mediaTypeFilter, setMediaTypeFilter] = useState('all');
 
   // Баланс токенов и пользователь из UserContext
-  const { currentUser, balance, setBalance, refreshUser, loginViaTelegram } = useUser();
+  const { currentUser, balance, setBalance, refreshUser, loginViaTelegram, logout } = useUser();
   const [tgUser, setTgUser] = useState(currentUser);
+  const isAuthenticated = !!(tgUser && tgUser.id && !tgUser.is_mock && !tgUser.is_guest);
 
   // Состояние авторизации через Telegram
   const [showTgAuthModal, setShowTgAuthModal] = useState(false);
@@ -224,8 +226,8 @@ const Profile = () => {
 
   // Загрузка реальных генераций пользователя с бэкенда
   useEffect(() => {
+    setTgUser(currentUser);
     if (currentUser) {
-      setTgUser(currentUser);
       const id = currentUser.telegram_id || currentUser.id;
       if (id) {
         fetchUserGenerations(id).then((serverGens) => {
@@ -254,9 +256,15 @@ const Profile = () => {
               };
             });
             setMyCreations(mapped);
+          } else {
+            setMyCreations([]);
           }
+        }).catch(() => {
+          setMyCreations([]);
         });
       }
+    } else {
+      setMyCreations([]);
     }
   }, [currentUser]);
 
@@ -458,46 +466,84 @@ const Profile = () => {
            ========================================================================= */}
         {topTab === 'profile' ? (
           <>
-            {/* Hero карточка пользователя */}
-            <div className="profile-hero-card">
-              <div className="profile-avatar-wrap">
-                {tgUser?.photo_url || tgUser?.face_photo_url ? (
-                  <img src={tgUser.photo_url || tgUser.face_photo_url} alt={displayName} className="profile-avatar-img" />
-                ) : (
-                  <div className="profile-avatar-fallback">
-                    {avatarLetter}
-                  </div>
-                )}
-                <div className="profile-avatar-status" title="Online" />
-              </div>
-
-              <div className="profile-user-info">
-                <div className="profile-user-name-row">
-                  <h2 className="profile-user-name">{displayName}</h2>
-                </div>
-
-                <p className="profile-username-tag">{displayUsername}</p>
-
-                <div className="profile-user-meta-row">
-                  <div className="profile-meta-chip">
-                    <ShieldCheck size={13} color="var(--color-accent)" />
-                    <span>ID: {tgUser?.telegram_id || tgUser?.id || '849201'}</span>
-                  </div>
-                  <div 
-                    className="profile-meta-chip" 
-                    onClick={handleOpenTelegramBot} 
-                    style={{ cursor: 'pointer', background: 'rgba(0, 136, 204, 0.15)', borderColor: 'rgba(0, 136, 204, 0.35)', color: '#29b6f6' }}
-                    title="Telegram бот @morphai_app_bot"
-                  >
-                    <Send size={11} color="#29b6f6" />
-                    <span>{tgUser?.username ? `@${tgUser.username}` : '@morphai_app_bot'}</span>
+            {/* Hero карточка пользователя (авторизованный профиль или гостевой экран) */}
+            {!isAuthenticated ? (
+              <div className="profile-hero-card guest-hero-card">
+                <div className="profile-avatar-wrap">
+                  <div className="profile-avatar-fallback guest-avatar-fallback">
+                    <User size={30} color="#e5b95c" />
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Баннер авторизации через Telegram для пользователей веб-версии */}
-            {tgUser?.is_mock && (
+                <div className="profile-user-info">
+                  <div className="profile-user-name-row">
+                    <h2 className="profile-user-name">Гостевой профиль</h2>
+                  </div>
+
+                  <p className="profile-username-tag">Вход не выполнен</p>
+
+                  <div className="profile-user-meta-row">
+                    <div 
+                      className="profile-meta-chip guest-login-chip"
+                      onClick={() => setShowTgAuthModal(true)}
+                      style={{ cursor: 'pointer', background: 'rgba(229, 185, 92, 0.15)', borderColor: 'rgba(229, 185, 92, 0.35)', color: '#e5b95c' }}
+                    >
+                      <Sparkles size={12} color="#e5b95c" />
+                      <span>Вход / Регистрация</span>
+                    </div>
+                    <div 
+                      className="profile-meta-chip" 
+                      onClick={handleOpenTelegramBot} 
+                      style={{ cursor: 'pointer', background: 'rgba(0, 136, 204, 0.15)', borderColor: 'rgba(0, 136, 204, 0.35)', color: '#29b6f6' }}
+                      title="Telegram бот @morphai_app_bot"
+                    >
+                      <Send size={11} color="#29b6f6" />
+                      <span>@morphai_app_bot</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="profile-hero-card">
+                <div className="profile-avatar-wrap">
+                  {tgUser?.photo_url || tgUser?.face_photo_url ? (
+                    <img src={tgUser.photo_url || tgUser.face_photo_url} alt={displayName} className="profile-avatar-img" />
+                  ) : (
+                    <div className="profile-avatar-fallback">
+                      {avatarLetter}
+                    </div>
+                  )}
+                  <div className="profile-avatar-status" title="Online" />
+                </div>
+
+                <div className="profile-user-info">
+                  <div className="profile-user-name-row">
+                    <h2 className="profile-user-name">{displayName}</h2>
+                  </div>
+
+                  <p className="profile-username-tag">{displayUsername}</p>
+
+                  <div className="profile-user-meta-row">
+                    <div className="profile-meta-chip">
+                      <ShieldCheck size={13} color="var(--color-accent)" />
+                      <span>ID: {tgUser?.telegram_id || tgUser?.id}</span>
+                    </div>
+                    <div 
+                      className="profile-meta-chip" 
+                      onClick={handleOpenTelegramBot} 
+                      style={{ cursor: 'pointer', background: 'rgba(0, 136, 204, 0.15)', borderColor: 'rgba(0, 136, 204, 0.35)', color: '#29b6f6' }}
+                      title="Telegram бот @morphai_app_bot"
+                    >
+                      <Send size={11} color="#29b6f6" />
+                      <span>{tgUser?.username ? `@${tgUser.username}` : '@morphai_app_bot'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Баннер авторизации через Telegram для гостей веб-версии */}
+            {!isAuthenticated && (
               <div className="profile-tg-connect-card" onClick={() => setShowTgAuthModal(true)}>
                 <div className="profile-tg-connect-left">
                   <div className="profile-tg-connect-icon">
@@ -505,7 +551,7 @@ const Profile = () => {
                   </div>
                   <div className="profile-tg-connect-info">
                     <span className="profile-tg-connect-title">Авторизоваться через Telegram</span>
-                    <span className="profile-tg-connect-desc">Войдите в 1 клик для сохранения генераций и баланса</span>
+                    <span className="profile-tg-connect-desc">Войдите в 1 клик для сохранения генераций и доступа к балансу</span>
                   </div>
                 </div>
                 <button className="profile-tg-connect-btn" onClick={(e) => { e.stopPropagation(); setShowTgAuthModal(true); }}>
@@ -519,24 +565,40 @@ const Profile = () => {
               <div className="profile-balance-left">
                 <span className="profile-balance-title">{t('tokenBalance')}</span>
                 <div className="profile-balance-val-row">
-                  <span className="profile-balance-number">{balance}</span>
+                  <span className="profile-balance-number">{isAuthenticated ? balance : 0}</span>
                   <span className="profile-balance-currency">CR</span>
                 </div>
                 <span className="profile-balance-hint">
-                  {t('approxHint', { photos: Math.floor(balance / 10), videos: Math.floor(balance / 12) })}
+                  {isAuthenticated 
+                    ? t('approxHint', { photos: Math.floor(balance / 10), videos: Math.floor(balance / 12) })
+                    : 'Войдите в аккаунт, чтобы активировать персональный баланс'
+                  }
                 </span>
               </div>
 
-              <button 
-                className="profile-recharge-btn"
-                onClick={() => {
-                  triggerHaptic('medium');
-                  setShowRechargeModal(true);
-                }}
-              >
-                <Plus size={16} strokeWidth={3} />
-                <span>{t('recharge')}</span>
-              </button>
+              {isAuthenticated ? (
+                <button 
+                  className="profile-recharge-btn"
+                  onClick={() => {
+                    triggerHaptic('medium');
+                    setShowRechargeModal(true);
+                  }}
+                >
+                  <Plus size={16} strokeWidth={3} />
+                  <span>{t('recharge')}</span>
+                </button>
+              ) : (
+                <button 
+                  className="profile-recharge-btn"
+                  onClick={() => {
+                    triggerHaptic('medium');
+                    setShowTgAuthModal(true);
+                  }}
+                >
+                  <User size={16} strokeWidth={2.5} />
+                  <span>Войти</span>
+                </button>
+              )}
             </div>
 
             {/* Витрина контента креатора */}
@@ -934,7 +996,7 @@ const Profile = () => {
               <div 
                 className="profile-setting-item" 
                 style={{ cursor: 'pointer' }}
-                onClick={() => setShowTgAuthModal(true)}
+                onClick={() => (!isAuthenticated ? setShowTgAuthModal(true) : null)}
               >
                 <div className="profile-setting-left">
                   <div className="profile-setting-icon-box" style={{ background: 'rgba(0, 136, 204, 0.15)', color: '#0088cc' }}>
@@ -942,21 +1004,45 @@ const Profile = () => {
                   </div>
                   <div className="profile-setting-texts">
                     <span className="profile-setting-label">
-                      {tgUser?.username ? `@${tgUser.username}` : (tgUser?.first_name || 'Гость')}
+                      {isAuthenticated ? `@${tgUser?.username || tgUser?.first_name || 'user'}` : 'Гостевой профиль'}
                     </span>
                     <span className="profile-setting-desc">
-                      ID: {tgUser?.telegram_id || tgUser?.id || '—'} • {tgUser?.is_mock ? 'Гостевой режим (нажмите для входа)' : 'Автоматически авторизован'}
+                      {isAuthenticated 
+                        ? `ID: ${tgUser?.telegram_id || tgUser?.id} • Авторизован через Telegram`
+                        : 'Вход не выполнен • Нажмите для авторизации'
+                      }
                     </span>
                   </div>
                 </div>
                 <div className="profile-setting-right">
-                  <button 
-                    className="profile-recharge-price-btn" 
-                    style={{ fontSize: '0.74rem', padding: '6px 12px' }}
-                    onClick={(e) => { e.stopPropagation(); setShowTgAuthModal(true); }}
-                  >
-                    {tgUser?.is_mock ? 'Войти' : 'Сменить'}
-                  </button>
+                  {isAuthenticated ? (
+                    <button 
+                      className="profile-recharge-price-btn" 
+                      style={{ fontSize: '0.74rem', padding: '6px 12px', background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)' }}
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        showConfirm({
+                          title: 'Выйти из профиля?',
+                          message: 'Вы выйдете из текущего Telegram-аккаунта на этом устройстве.',
+                          onConfirm: () => {
+                            logout();
+                            setTgUser(null);
+                            showToast('Вы вышли из профиля', 'info');
+                          }
+                        });
+                      }}
+                    >
+                      Выйти
+                    </button>
+                  ) : (
+                    <button 
+                      className="profile-recharge-price-btn" 
+                      style={{ fontSize: '0.74rem', padding: '6px 12px' }}
+                      onClick={(e) => { e.stopPropagation(); setShowTgAuthModal(true); }}
+                    >
+                      Войти
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -1545,6 +1631,11 @@ const Profile = () => {
           </div>
         </div>
       )}
+
+      {/* Подвал сайта с реквизитами и информацией */}
+      <div style={{ marginTop: '30px' }}>
+        <Footer />
+      </div>
 
     </div>
   );

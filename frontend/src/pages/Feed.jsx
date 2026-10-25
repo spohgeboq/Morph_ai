@@ -11,6 +11,7 @@ import {
   checkRemixStatus, 
   uploadAdminMedia 
 } from '../services/api';
+import { cleanModelName } from '../utils/modelNames';
 
 // База ленты загружается динамически из базы данных PostgreSQL через админку
 const MASTER_FEED_DB = [];
@@ -83,9 +84,9 @@ const Feed = () => {
             id: `tmpl_${item.id}`,
             title: item.title || item.name || '',
             type: isVideo ? 'video' : 'photo',
-            author: item.model_name || 'AI Model',
+            author: cleanModelName(item.model_name) || 'AI Model',
             avatar: resolveAvatar(item),
-            model: item.model_name || 'Flux 1.1 Pro',
+            model: cleanModelName(item.model_name) || 'Flux 1.1 Pro',
             cost: item.cost !== undefined ? item.cost : 10,
             media: mediaUrl,
             videoUrl: isVideo ? mediaUrl : null,

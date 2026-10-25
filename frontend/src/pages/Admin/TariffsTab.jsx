@@ -432,6 +432,20 @@ const TariffsTab = ({ onShowToast }) => {
                 </div>
               </div>
 
+              <div className="admin-form-group">
+                <label>Ссылка на оплату в Tribute (опционально)</label>
+                <input
+                  type="text"
+                  value={editingTariff.tribute_url || ''}
+                  onChange={(e) => setEditingTariff({ ...editingTariff, tribute_url: e.target.value })}
+                  placeholder="https://t.me/tribute/app?startapp=... или https://web.tribute.tg/p/..."
+                  className="admin-form-input"
+                />
+                <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', marginTop: '4px', display: 'block' }}>
+                  Прямая ссылка на товар из кабинета Tribute.tg (поддерживает карты Казахстана Kaspi, Halyk, Visa/MC и СБП)
+                </span>
+              </div>
+
               <div className="admin-checkbox-group">
                 <label className="admin-checkbox-label">
                   <input
