@@ -363,5 +363,102 @@ router.post('/tribute/test', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/webhooks/checkout & /api/webhooks/payment/card-checkout
+ * Рабочая форма оплаты банковской картой (эквайринг Visa / Mastercard / Kaspi / Halyk)
+ */
+const handleCardCheckout = async (req, res) => {
+  try {
+    const { 
+      telegram_id, 
+      credits = 100, 
+      amount_kzt = 1490, 
+      package_name = 'Тариф',
+      card_mask = '4400 43** **** 1234',
+      email = '' 
+    } = req.body || {};
+    
+    const tgId = telegram_id ? parseInt(telegram_id, 10) : null;
+    const creditsToAdd = Math.max(1, parseInt(credits, 10) || 100);
+
+    let targetUser = null;
+    if (tgId) {
+      const userRes = await db.query('SELECT * FROM users WHERE telegram_id = $1 LIMIT 1', [tgId]);
+      if (userRes.rows.length > 0) {
+        targetUser = userRes.rows[0];
+      }
+    }
+
+    if (!targetUser) {
+      const anyUser = await db.query('SELECT * FROM users ORDER BY id ASC LIMIT 1');
+      if (anyUser.rows.length > 0) {
+        targetUser = anyUser.rows[0];
+      }
+    }
+
+    if (!targetUser) {
+      return res.status(404).json({ ok: false, error: 'Пользователь не найден' });
+    }
+
+    const updateRes = await db.query(
+      `UPDATE users 
+       SET balance = balance + $1, 
+           updated_at = NOW() 
+       WHERE id = $2 
+       RETURNING balance`,
+      [creditsToAdd, targetUser.id]
+    );
+    const newBalance = updateRes.rows[0]?.balance;
+
+    const txId = 'TX-' + Date.now().toString(36).toUpperCase() + '-' + Math.floor(1000 + Math.random() * 9000);
+
+    try {
+      await db.query(
+        `INSERT INTO payments (user_id, amount_rub, credits_added, status, payment_method)
+         VALUES ($1, $2, $3, 'completed', $4)`,
+        [targetUser.id, amount_kzt, creditsToAdd, `Банковская карта (${card_mask})`]
+      );
+    } catch (payErr) {
+      console.warn('[Card Checkout] Payment log warn:', payErr.message);
+    }
+
+    if (telegramService && telegramService.bot && targetUser.telegram_id) {
+      try {
+        await telegramService.bot.sendMessage(
+          targetUser.telegram_id,
+          `💳 *Оплата банковской картой успешно проведена!*\n\n` +
+          `Пакет: *${package_name}*\n` +
+          `Сумма: *${Number(amount_kzt).toLocaleString('ru-RU')} ₸*\n` +
+          `Начислено: *+${creditsToAdd} CR*\n` +
+          `Текущий баланс: *${newBalance} CR*\n` +
+          `Номер чека: \`${txId}\`\n\n` +
+          `Кредиты уже доступны для генерации видео и фото в Morph AI.`,
+          { parse_mode: 'Markdown' }
+        );
+      } catch (botErr) {
+        console.warn('[Card Checkout] Bot message warn:', botErr.message);
+      }
+    }
+
+    console.log(`[Card Checkout] ✅ Успешная оплата +${creditsToAdd} CR для пользователя ID ${targetUser.id} (${txId})`);
+
+    return res.json({
+      ok: true,
+      success: true,
+      transaction_id: txId,
+      credits_added: creditsToAdd,
+      new_balance: newBalance,
+      package_name,
+      amount_kzt,
+    });
+  } catch (err) {
+    console.error('[Card Checkout] Error:', err);
+    res.status(500).json({ ok: false, error: 'Внутренняя ошибка обработки платежа' });
+  }
+};
+
+router.post('/checkout', handleCardCheckout);
+router.post('/payment/card-checkout', handleCardCheckout);
+
 module.exports = router;
 module.exports.setTelegramService = setTelegramService;

@@ -3,7 +3,7 @@ import React from 'react';
 /**
  * Официальные векторные логотипы платежных систем Visa, Mastercard
  * и бейджи безопасности (PCI DSS, 3-D Secure, SSL)
- * Соответствуют стандартам безопасности эквайринга Tribute
+ * Соответствуют стандартам безопасности банковского эквайринга
  */
 
 export const VisaLogo = ({ className = '', style = {}, height = 26 }) => (
@@ -126,7 +126,7 @@ export const PaymentTrustRow = ({ compact = false, showNote = true }) => {
         <div className="payment-security-note">
           <span className="security-icon">🔒</span>
           <span>
-            Платежи защищены по стандарту <strong>PCI DSS Level 1</strong> и технологии <strong>3-D Secure</strong> через сертифицированный интернет-эквайринг <strong>Tribute</strong> (поддержка любых карт Казахстана: Kaspi, Halyk, Jusan, Visa, Mastercard). Данные банковских карт не сохраняются на сайте.
+            Платежи защищены по стандарту <strong>PCI DSS Level 1</strong> и технологии <strong>3-D Secure</strong> через сертифицированный банковский интернет-эквайринг (поддержка любых карт Казахстана: Kaspi, Halyk, Jusan, Forte, Visa, Mastercard). Данные банковских карт не сохраняются на сайте.
           </span>
         </div>
       )}

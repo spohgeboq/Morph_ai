@@ -167,7 +167,7 @@ export const TariffsSection = ({ onSelectPackage, title = 'Тарифные пл
         <div className="tariffs-security-inner">
           <div className="tariffs-sec-badge-item">
             <ShieldCheck size={20} color="#10b981" />
-            <span>Интернет-эквайринг Tribute (Kaspi, Halyk, Jusan, Visa, Mastercard)</span>
+            <span>Банковский интернет-эквайринг (Kaspi, Halyk, Jusan, Visa, Mastercard)</span>
           </div>
           <div className="tariffs-sec-logos">
             <div className="sec-logo-pill"><VisaLogo height={22} /></div>
